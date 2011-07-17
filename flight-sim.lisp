@@ -44,7 +44,7 @@
 		:angle 0
 		:r-vector (make-array 3 :initial-contents '(0 1 0))))
 
-(defparameter *origin* (make-array 3 :initial-contents '(0 2 7)))
+(defparameter *origin* (make-array 3 :initial-contents '(0 -2 -7)))
 (defparameter *orientation* (make-array 3 :initial-contents '(0 1 0)))
 
 (let ((time-units (/ 1.0 internal-time-units-per-second)))
@@ -60,9 +60,9 @@
 
 ;;(defparameter *t1* '( (-0.5 -0.5 0) (0 0.5 0) (0.5 -0.5 0)))
 
-(defun get-vertecies (faces) 
+(defun get-vertecies (faces vertices) 
   (make-array (length faces) :initial-contents
-	      (loop for i across faces collecting (aref *v* i))))
+	      (loop for i across faces collecting (aref vertices i))))
 
 
 
@@ -158,22 +158,28 @@
 	 (time (- start-time *last-time*)))
 	 
       (gl:clear :color-buffer-bit)
+      (gl:load-identity)
+      
+      
+      ;(gl:translate (aref *origin* 0) (aref *origin* 1) (aref *origin* 2)) ;; eye
+      (gl:translate 0 -2 -7)
+      (gl:rotate 10 1 0 0)
   ;;; draw a triangle
       (setf (coords *diamond*) (rotate* (make-rotation-matrix 0 (- (wall-time) *last-time*) 0) (coords *diamond*)))
       (incf (angle *diamond*) (* 120 time))
       (gl:push-matrix)
       (gl:translate (aref (coords *diamond*) 0) (aref (coords *diamond*) 1) (aref (coords *diamond*) 2))
       (gl:rotate (angle *diamond*) (aref (r-vector *diamond*) 0) (aref (r-vector *diamond*) 1) (aref (r-vector *diamond*) 2))
-      (loop for face-list across (faces (model *diamond*)) do
-	   (draw-triangle (get-vertecies face-list) time))
+      (loop for face across (faces (model *diamond*)) do
+	   (draw-triangle (get-vertecies face (vertices (model *diamond*))) time))
       (gl:pop-matrix)
 
-      (gl:matrix-mode :modelview)
-      (gl:load-identity)
-      (glu:look-at (aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
-		   0 0 0 ;; center
-		   0 1 0 ;; up in y pos
-		   )
+      ;(gl:matrix-mode :modelview)
+      ;(gl:load-identity)
+      ;(glu:look-at (aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
+	;	   0 0 0 ;; center
+	;	   0 1 0 ;; up in y pos
+	;	   )
 	   
       
     ;; finish the frame
