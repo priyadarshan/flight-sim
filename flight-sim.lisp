@@ -11,6 +11,14 @@
        (progn ,@body)
      (continue () :report "Continue")))
 
+;;; degrees to radians
+(defmacro dtr (d)
+  `(/ (* ,d pi) 180))
+
+;;; radians to degress
+(defmacro rtd (r)
+  `(/ (* ,r 180) pi))
+
 (defun make-2d-array (h w contents)
   (let ((arr (make-array h)))
     (do ((i 0 (incf i))
@@ -44,8 +52,11 @@
 		:angle 0
 		:r-vector (make-array 3 :initial-contents '(0 1 0))))
 
-(defparameter *origin* (make-array 3 :initial-contents '(0 -2 -7)))
+(defparameter *origin* (make-array 3 :initial-contents '(0 0 -7)))
 (defparameter *orientation* (make-array 3 :initial-contents '(0 1 0)))
+
+(defparameter *velocity* 1) ; 1 unit / second
+(defparameter *controls-active* '())
 
 (let ((time-units (/ 1.0 internal-time-units-per-second)))
   (defun wall-time (&key (offset 0))
@@ -158,28 +169,39 @@
 	 (time (- start-time *last-time*)))
 	 
       (gl:clear :color-buffer-bit)
-      (gl:load-identity)
+      ;(gl:load-identity)
+
+      (loop for key in *controls-active* do 
+	   (case key 
+	       ((:sdl-key-w) ; + z
+		(incf (aref *origin* 2) (* time *velocity*)))
+	       ((:sdl-key-s) ; - z
+		(decf (aref *origin* 2) (* time *velocity*)))
+	    (otherwise (format t "~a~%" key))))  
       
-      
-      ;(gl:translate (aref *origin* 0) (aref *origin* 1) (aref *origin* 2)) ;; eye
-      (gl:translate 0 -2 -7)
-      (gl:rotate 10 1 0 0)
+      (gl:translate (aref *origin* 0) (aref *origin* 1) (aref *origin* 2)) ;; eye
+      ;(gl:translate 0 -2 -10)
+      ;(gl:rotate 22 1 0 0)
   ;;; draw a triangle
       (setf (coords *diamond*) (rotate* (make-rotation-matrix 0 (- (wall-time) *last-time*) 0) (coords *diamond*)))
       (incf (angle *diamond*) (* 120 time))
       (gl:push-matrix)
+      ;(gl:load-identity)
       (gl:translate (aref (coords *diamond*) 0) (aref (coords *diamond*) 1) (aref (coords *diamond*) 2))
       (gl:rotate (angle *diamond*) (aref (r-vector *diamond*) 0) (aref (r-vector *diamond*) 1) (aref (r-vector *diamond*) 2))
       (loop for face across (faces (model *diamond*)) do
 	   (draw-triangle (get-vertecies face (vertices (model *diamond*))) time))
       (gl:pop-matrix)
-
-      ;(gl:matrix-mode :modelview)
-      ;(gl:load-identity)
-      ;(glu:look-at (aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
-	;	   0 0 0 ;; center
-	;	   0 1 0 ;; up in y pos
-	;	   )
+      
+      
+      (gl:matrix-mode :modelview)
+      (gl:load-identity)
+;      (gl:translate 0 -2 -7)
+ ;     (gl:rotate 16 1  0 0)
+      (glu:look-at 0 0 1 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
+		   0 0 0 ;; center
+		   0 1 0 ;; up in y pos
+		   )
 	   
       
     ;; finish the frame
@@ -227,6 +249,7 @@
   (setf *start-time* (wall-time))
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
+  (setf *controls-active* '())
 ;  (reshape)
 )
 
@@ -240,6 +263,9 @@
     (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
     (sdl:with-events () 
       (:quit-event () t)
+      (:key-down-event (:key key) (push key  *controls-active*))
+      (:key-up-event (:key key) (setf *controls-active* (remove key *controls-active*)))
+		       
       (:idle ()
 	     ;; this lets slime keep working while the main loop is running
              ;; in sbcl using the :fd-handler swank:*communication-style*
