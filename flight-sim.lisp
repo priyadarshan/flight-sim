@@ -28,14 +28,19 @@
     arr))
 
 (defclass model ()
-  ((vertices :initarg :vertices :accessor vertices :initform (make-array 0))
-   (faces :initarg :faces :accessor faces :initform (make-array 0))))
+  ((vertices :initarg :vertices :accessor vertices :initform (vector))
+   (faces :initarg :faces :accessor faces :initform (vector))))
+
+(defclass motion ()
+  ((velocities :initarg :velocities :accessor velocities :initform (vector 0 0 0))
+   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))))
+   
 
 (defclass game-object ()
   ((model :initarg :model :accessor model :initform (make-instance 'model))
-   (coords :initarg :coords :accessor coords :initform (make-array 3 :initial-contents '(0 0 0)))
-   (angle :initarg :angle :accessor angle :initform 0)
-   (r-vector :initarg :r-vector :accessor r-vector :initform (make-array 3 :initial-contents '(0 0 0)))))
+   (motion :initarg :motion :accessor motion :initform (make-instance 'motion))
+   (coords :initarg :coords :accessor coords :initform (vector 0 0 0))
+   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))))
 
 
 (defparameter *diamond-model* 
@@ -44,18 +49,21 @@
 						(-0.5 0 0.5) (-0.5 0 -0.5) (0.0 -1 0)))
 		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
+
+
+
 (defparameter *diamond* 
   (make-instance 'game-object
 		:model *diamond-model*
-		:coords (make-array 3 :initial-contents 
-				      '(0 0 -3))
-		:angle 0
-		:r-vector (make-array 3 :initial-contents '(0 1 0))))
+		:coords (vector 0 0 -3)
+		:angles (vector 0 0 0)))
 
-(defparameter *origin* (make-array 3 :initial-contents '(0 0 -7)))
-(defparameter *orientation* (make-array 3 :initial-contents '(0 1 0)))
+(defparameter *world* nil)
 
-(defparameter *velocity* 1) ; 1 unit / second
+(defparameter *origin* (vector 0 0 -7))
+(defparameter *orientation* (vector 0 1 0))
+
+(defparameter *velocity* 2) ; 1 unit / second
 (defparameter *controls-active* '())
 
 (let ((time-units (/ 1.0 internal-time-units-per-second)))
@@ -87,6 +95,7 @@
    (/ (+ (* (sin (+ (* 0.3 time) (* 4/3 PI))) 127) 128) 255)))
 
 
+;; returns a real lisp 2d array
 (defun make-rotation-matrix (xa ya za) 
   (let ((sxa (sin xa))
 	(cxa (cos xa))
@@ -160,17 +169,44 @@
     (let ((v (aref tri 2)))
       (gl:vertex (aref v 0) (aref v 1) (aref v 2)))))
 
+(defun draw (time)
+  ;; clear the buffer
+  (gl:clear :color-buffer-bit :depth-buffer-bit)      
+  ;; move to eye position
+  (gl:translate (aref *origin* 0) (aref *origin* 1) (aref *origin* 2)) ;; eye
+  (loop for entity across *world* do
+       ;(let ((entity (aref *world* i)))
+       (progn
+	 (gl:push-matrix)
+	 (gl:translate (aref (coords entity) 0) (aref (coords entity) 1) (aref (coords entity) 2))
+   (gl:rotate (aref (angles entity) 0) 1 0 0)
+   (gl:rotate (aref (angles entity) 1) 0 1 0)
+   (gl:rotate (aref (angles entity) 2) 0 0 1)
+   (loop for face across (faces (model entity)) do
+	(draw-triangle (get-vertecies face (vertices (model entity))) time))
+   (gl:pop-matrix)
+      ))
+      
+   (gl:matrix-mode :modelview)
+   (gl:load-identity)
+;      (gl:translate 0 -2 -7)
+ ;     (gl:rotate 16 1  0 0)
+   (glu:look-at 0 0 1 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
+		0 0 0 ;; center
+		0 1 0 ;; up in y pos
+		)
+	   
+      
+    ;; finish the frame
+   (gl:flush)
+   (sdl:update-display))
 
 
-
-(defun draw ()
+(defun sim-step ()
   "draw a frame"
   (let* ((start-time (wall-time))
 	 (time (- start-time *last-time*)))
-	 
-      (gl:clear :color-buffer-bit)
-      ;(gl:load-identity)
-
+	
       (loop for key in *controls-active* do 
 	   (case key 
 	       ((:sdl-key-w) ; + z
@@ -178,53 +214,28 @@
 	       ((:sdl-key-s) ; - z
 		(decf (aref *origin* 2) (* time *velocity*)))
 	    (otherwise (format t "~a~%" key))))  
-      
-      (gl:translate (aref *origin* 0) (aref *origin* 1) (aref *origin* 2)) ;; eye
-      ;(gl:translate 0 -2 -10)
-      ;(gl:rotate 22 1 0 0)
-  ;;; draw a triangle
-      (setf (coords *diamond*) (rotate* (make-rotation-matrix 0 (- (wall-time) *last-time*) 0) (coords *diamond*)))
-      (incf (angle *diamond*) (* 120 time))
-      (gl:push-matrix)
-      ;(gl:load-identity)
-      (gl:translate (aref (coords *diamond*) 0) (aref (coords *diamond*) 1) (aref (coords *diamond*) 2))
-      (gl:rotate (angle *diamond*) (aref (r-vector *diamond*) 0) (aref (r-vector *diamond*) 1) (aref (r-vector *diamond*) 2))
-      (loop for face across (faces (model *diamond*)) do
-	   (draw-triangle (get-vertecies face (vertices (model *diamond*))) time))
-      (gl:pop-matrix)
-      
-      
-      (gl:matrix-mode :modelview)
-      (gl:load-identity)
-;      (gl:translate 0 -2 -7)
- ;     (gl:rotate 16 1  0 0)
-      (glu:look-at 0 0 1 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
-		   0 0 0 ;; center
-		   0 1 0 ;; up in y pos
-		   )
-	   
-      
-    ;; finish the frame
-      (gl:flush)
-      (sdl:update-display)
 
-    (incf *num-frames*)
-    (if (not (eql (floor *last-time*) (floor time)))
-	(let* ((short-interval time)
-	       (long-interval (- start-time *start-time*) )
-	       (short-fps (floor (if (zerop short-interval) 0 (/ 1 short-interval))))
-	       (long-fps (floor (if (zerop long-interval) 0  (/ *num-frames* long-interval)))))
-	       
-	  (format t "FPS since last:~a since start:~a (~a frames in ~a seconds)~%" short-fps long-fps *num-frames* long-interval)))
+      (draw time)
+      
+
+      (incf *num-frames*)
+      (if (not (eql (floor *last-time*) (floor time)))
+	  (let* ((short-interval time)
+		 (long-interval (- start-time *start-time*) )
+		 (short-fps (floor (if (zerop short-interval) 0 (/ 1 short-interval))))
+		 (long-fps (floor (if (zerop long-interval) 0  (/ *num-frames* long-interval)))))
+	    
+	    (format t "FPS since last:~a since start:~a (~a frames in ~a seconds)~%" short-fps long-fps *num-frames* long-interval)))
   
-  (setf *last-time* start-time)))
+      (setf *last-time* start-time)))
+
 
 (defun reshape () 
   (gl:shade-model :smooth)
   (gl:clear-color 0 0 0 0)
   (gl:clear-depth 1)
- ; (gl:enable :depth-test)
- ; (gl:depth-func :lequal)
+  (gl:enable :depth-test)
+  (gl:depth-func :lequal)
   (gl:enable :cull-face)
   (gl:hint :perspective-correction-hint :nicest)
 
@@ -245,12 +256,23 @@
   
 )
 
+(defun populate-world ()
+  (setf *world* 
+	(make-array 10 :initial-contents
+		    (loop for i from 0 to 9 collecting
+			 (make-instance 'game-object 
+					:model *diamond-model*
+					:coords (vector (- (random 10) 5) (- (random 10) 5) (- (random 10) 5))
+					:angles (vector (random 360) (random 360) (random 360)))))))
+			    
+
 (defun init () 
   (setf *start-time* (wall-time))
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
   (setf *controls-active* '())
 ;  (reshape)
+  (populate-world)
 )
 
 (defun main-loop () 
@@ -272,5 +294,5 @@
              ;; (something similar might help in some other lisps, not sure which though)
 	     #+(and sbcl (not sb-thread)) (restartable
                                            (sb-sys:serve-all-events 0))
-             (restartable (draw))))))
+             (restartable (sim-step))))))
 	     ;(draw)))))
