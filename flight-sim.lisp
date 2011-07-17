@@ -19,15 +19,33 @@
       (setf (aref arr i) (make-array w :initial-contents (car rest-list))))
     arr))
 
-(defparameter *n* (make-array 3 :initial-contents '(0 0 1)))
-(defparameter *v* (make-2d-array 6 3 '((0.0 1 0) (0.5 0 0.5) (0.5 0 -0.5) 
-					(-0.5 0 0.5) (-0.5 0 -0.5) (0.0 -1 0))))
+(defclass model ()
+  ((vertices :initarg :vertices :accessor vertices :initform (make-array 0))
+   (faces :initarg :faces :accessor faces :initform (make-array 0))))
 
-(defparameter *faces* (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
-					   (3 5 1) (2 5 4) (1 5 2) (4 5 3))))
+(defclass game-object ()
+  ((model :initarg :model :accessor model :initform (make-instance 'model))
+   (coords :initarg :coords :accessor coords :initform (make-array 3 :initial-contents '(0 0 0)))
+   (angle :initarg :angle :accessor angle :initform 0)
+   (r-vertex :initarg :r-vertex :accessor r-vertex :initform (make-array 3 :initial-contents '(0 0 0)))))
 
-(defparameter *position* (make-array 3 :initial-contents 
-				     '(0 0 -3)))
+
+(defparameter *diamond-model* 
+  (make-instance 'model
+		 :vertices (make-2d-array 6 3 '((0.0 1 0) (0.5 0 0.5) (0.5 0 -0.5) 
+						(-0.5 0 0.5) (-0.5 0 -0.5) (0.0 -1 0)))
+		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
+					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
+(defparameter *diamond* 
+  (make-instance 'game-object
+		:model *diamond-model*
+		:coords (make-array 3 :initial-contents 
+				      '(0 0 -3))
+		:angle 0
+		:r-vertex (make-array 3 :initial-contents '(0 1 0))))
+
+(defparameter *origin* (make-array 3 :initial-contents '(0 2 7)))
+(defparameter *orientation* (make-array 3 :initial-contents '(0 1 0)))
 
 (let ((time-units (/ 1.0 internal-time-units-per-second)))
   (defun wall-time (&key (offset 0))
@@ -136,13 +154,27 @@
 
 (defun draw ()
   "draw a frame"
-  (let* ((time (- (wall-time) *start-time*)))
+  (let* ((start-time (wall-time))
+	 (time (- start-time *last-time*)))
 	 
       (gl:clear :color-buffer-bit)
   ;;; draw a triangle
-      (loop for face-list across *faces* do
-	   (let ((rt (translate-triangle (rotate-triangle (get-vertecies face-list) (make-rotation-matrix 0 (* 2 time) 0))  (rotate* (make-rotation-matrix  0 time 0) *position*))))
-	     (draw-triangle rt time)))
+      (setf (coords *diamond*) (rotate* (make-rotation-matrix 0 (- (wall-time) *last-time*) 0) (coords *diamond*)))
+      (gl:push-matrix)
+      (gl:translate (aref (coords *diamond*) 0) (aref (coords *diamond*) 1) (aref (coords *diamond*) 2))
+      (gl:rotate (* 100 time) 0 1 0)
+      (loop for face-list across (faces (model *diamond*)) do
+	   (draw-triangle (get-vertecies face-list) time))
+      (gl:pop-matrix)
+
+      (gl:matrix-mode :modelview)
+      (gl:load-identity)
+      (glu:look-at (aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
+		   0 0 0 ;; center
+		   0 1 0 ;; up in y pos
+		   )
+	   
+      
     ;; finish the frame
       (gl:flush)
       (sdl:update-display)
@@ -156,7 +188,7 @@
 	       
 	  (format t "FPS since last:~a since start:~a~%" short-fps long-fps)))
   
-  (setf *last-time* time)))
+  (setf *last-time* start-time)))
 
 (defun reshape () 
   (gl:shade-model :smooth)
@@ -176,18 +208,18 @@
 		   )
 
   (gl:matrix-mode :modelview)
-  (gl:load-identity)
-  (glu:look-at 0 2 7 ;; eye
-	       0 0 0 ;; center
-	       0 1 0 ;; up in y pos
-	       )
+ ; (gl:load-identity)
+  ;(glu:look-at 0 2 7 ;; eye
+;	       0 0 0 ;; center
+;	       0 1 0 ;; up in y pos
+;	       )
   
 )
 
 (defun init () 
   (setf *start-time* (wall-time))
   (setf *num-frames* 0)
-  (setf *last-time* 0)
+  (setf *last-time* *start-time*)
 ;  (reshape)
 )
 
