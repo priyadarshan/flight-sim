@@ -27,7 +27,7 @@
   ((model :initarg :model :accessor model :initform (make-instance 'model))
    (coords :initarg :coords :accessor coords :initform (make-array 3 :initial-contents '(0 0 0)))
    (angle :initarg :angle :accessor angle :initform 0)
-   (r-vertex :initarg :r-vertex :accessor r-vertex :initform (make-array 3 :initial-contents '(0 0 0)))))
+   (r-vector :initarg :r-vector :accessor r-vector :initform (make-array 3 :initial-contents '(0 0 0)))))
 
 
 (defparameter *diamond-model* 
@@ -42,7 +42,7 @@
 		:coords (make-array 3 :initial-contents 
 				      '(0 0 -3))
 		:angle 0
-		:r-vertex (make-array 3 :initial-contents '(0 1 0))))
+		:r-vector (make-array 3 :initial-contents '(0 1 0))))
 
 (defparameter *origin* (make-array 3 :initial-contents '(0 2 7)))
 (defparameter *orientation* (make-array 3 :initial-contents '(0 1 0)))
@@ -160,9 +160,10 @@
       (gl:clear :color-buffer-bit)
   ;;; draw a triangle
       (setf (coords *diamond*) (rotate* (make-rotation-matrix 0 (- (wall-time) *last-time*) 0) (coords *diamond*)))
+      (incf (angle *diamond*) (* 120 time))
       (gl:push-matrix)
       (gl:translate (aref (coords *diamond*) 0) (aref (coords *diamond*) 1) (aref (coords *diamond*) 2))
-      (gl:rotate (* 100 time) 0 1 0)
+      (gl:rotate (angle *diamond*) (aref (r-vector *diamond*) 0) (aref (r-vector *diamond*) 1) (aref (r-vector *diamond*) 2))
       (loop for face-list across (faces (model *diamond*)) do
 	   (draw-triangle (get-vertecies face-list) time))
       (gl:pop-matrix)
@@ -181,12 +182,12 @@
 
     (incf *num-frames*)
     (if (not (eql (floor *last-time*) (floor time)))
-	(let* ((short-interval (- time *last-time* ))
-	       (long-interval time)
+	(let* ((short-interval time)
+	       (long-interval (- start-time *start-time*) )
 	       (short-fps (floor (if (zerop short-interval) 0 (/ 1 short-interval))))
 	       (long-fps (floor (if (zerop long-interval) 0  (/ *num-frames* long-interval)))))
 	       
-	  (format t "FPS since last:~a since start:~a~%" short-fps long-fps)))
+	  (format t "FPS since last:~a since start:~a (~a frames in ~a seconds)~%" short-fps long-fps *num-frames* long-interval)))
   
   (setf *last-time* start-time)))
 
@@ -240,3 +241,4 @@
 	     #+(and sbcl (not sb-thread)) (restartable
                                            (sb-sys:serve-all-events 0))
              (restartable (draw))))))
+	     ;(draw)))))
