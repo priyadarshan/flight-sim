@@ -27,13 +27,39 @@
       (setf (aref arr i) (make-array w :initial-contents (car rest-list))))
     arr))
 
+(defclass accelerator () nil)
+
+(defclass circle-accel (accelerator)
+  ((origin :initarg :origin :accessor origin :initform (vector 0 0 0))))
+
+(defgeneric accel (accelerator motion time)
+  (:documentation "apply some modifications to a motion class based on some rules"))
+
+(defmethod accel ((accelerator accelerator) entity time)
+  nil)
+
+(defmethod accel ((accelerator circle-accel) entity time)
+  (format t "(circle-accel::accel)~%")
+  (let* ((o-vector (vector 
+		    (- (aref (origin accelerator) 0) (aref (coords entity) 0))
+		    (- (aref (origin accelerator) 1) (aref (coords entity) 1))
+		    (- (aref (origin accelerator) 2) (aref (coords entity) 2))))
+	 (t-vector (rotate* (make-rotation-matrix (/ pi 2) (/ pi 2) (/ pi 2)) o-vector)))
+    (setf (velocities (motion entity)) t-vector)))
+;    (setf (aref (velocities (motion entity) 0) (* time (aref t-vector 0)))
+;    (setf (aref (velocities (motion entity)) 0) (* time (aref t-vector 0)))
+;    (setf (aref (velocities (motion entity)) 0) (* time (aref t-vector 0)))))
+	 
+
 (defclass model ()
   ((vertices :initarg :vertices :accessor vertices :initform (vector))
    (faces :initarg :faces :accessor faces :initform (vector))))
 
 (defclass motion ()
   ((velocities :initarg :velocities :accessor velocities :initform (vector 0 0 0))
-   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))))
+   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))
+   (accelerator :initarg :accelerator :accessor accelerator :initform (make-instance 'accelerator))
+   ))
    
 
 (defclass game-object ()
@@ -153,6 +179,7 @@
 ;
 
 (defun draw-triangle (tri time) 
+  (let ((time (- (wall-time) *start-time*)))
   (gl:with-primitive :triangles
     (multiple-value-bind (red green blue) (shift-color time)
       (gl:color red green blue))
@@ -167,7 +194,7 @@
     (multiple-value-bind (blue green red) (shift-color time)
       (gl:color red green blue))
     (let ((v (aref tri 2)))
-      (gl:vertex (aref v 0) (aref v 1) (aref v 2)))))
+      (gl:vertex (aref v 0) (aref v 1) (aref v 2))))))
 
 (defun draw (time)
   ;; clear the buffer
@@ -203,6 +230,12 @@
 
 (defun phys-step (time)
   (loop for entity across *world* do
+       (accel (accelerator (motion entity)) entity time)
+       (let ((velocities (velocities (motion entity)))
+	     (coords (coords entity)))
+	 (incf (aref coords 0) (* time (aref velocities 0)))
+	 (incf (aref coords 1) (* time (aref velocities 1)))
+	 (incf (aref coords 2) (* time (aref velocities 2))))
        (let ((v-angles (angles (motion entity)))
 	     (angles (angles entity)))
 	 (incf (aref angles 0) (* time (aref v-angles 0)))
@@ -276,7 +309,8 @@
 							       :angles (vector 
 									(- (random 620) 310)
 									(- (random 620) 310) 
-									(- (random 620) 310))))))))
+									(- (random 620) 310))
+							       :accelerator (make-instance 'circle-accel :origin (vector 0 0 0))))))))
 									
 		     
 			    
@@ -293,7 +327,7 @@
 (defun main-loop () 
   (init)
   (sdl:with-init ()
-    (sdl:window 320 240 :flags sdl:sdl-opengl)
+    (sdl:window 640 480 :flags sdl:sdl-opengl)
     ;; cl-opengl needs platform specific support to be able to load GL
     ;; extensions, so we need to tell it how to do so in lispbuilder-sdl
     (reshape)
