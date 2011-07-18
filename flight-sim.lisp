@@ -201,6 +201,13 @@
    (gl:flush)
    (sdl:update-display))
 
+(defun phys-step (time)
+  (loop for entity across *world* do
+       (let ((v-angles (angles (motion entity)))
+	     (angles (angles entity)))
+	 (incf (aref angles 0) (* time (aref v-angles 0)))
+	 (incf (aref angles 1) (* time (aref v-angles 1)))
+	 (incf (aref angles 2) (* time (aref v-angles 2))))))
 
 (defun sim-step ()
   "draw a frame"
@@ -215,6 +222,7 @@
 		(decf (aref *origin* 2) (* time *velocity*)))
 	    (otherwise (format t "~a~%" key))))  
 
+      (phys-step time)
       (draw time)
       
 
@@ -263,7 +271,14 @@
 			 (make-instance 'game-object 
 					:model *diamond-model*
 					:coords (vector (- (random 10) 5) (- (random 10) 5) (- (random 10) 5))
-					:angles (vector (random 360) (random 360) (random 360)))))))
+					:angles (vector (random 360) (random 360) (random 360))
+					:motion (make-instance 'motion
+							       :angles (vector 
+									(- (random 620) 310)
+									(- (random 620) 310) 
+									(- (random 620) 310))))))))
+									
+		     
 			    
 
 (defun init () 
