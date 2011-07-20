@@ -6,5 +6,6 @@
                #:cl-glu
                #:lispbuilder-sdl)
   :components ((:file "package")
-               (:file "flight-sim")))
+               (:file "flight-sim")
+	       (:file "physics")))
 

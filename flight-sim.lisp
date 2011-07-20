@@ -56,16 +56,23 @@
    (faces :initarg :faces :accessor faces :initform (vector))))
 
 (defclass motion ()
-  ((velocities :initarg :velocities :accessor velocities :initform (vector 0 0 0))
-   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))
-   (accelerator :initarg :accelerator :accessor accelerator :initform (make-instance 'accelerator))
-   ))
+  ((coords :initarg :coords :accessor coords :initform (vector 0 0 0))
+   (velocity :initarg :velocity :accessor velocity :initform (vector 0 0 0))
+   (acceleration :initarg :acceleration :accessor acceleration :initform (vector 0 0 0))
+   (jerk :initarg :jerk :accessor jerk :initform (vector 0 0 0))))
    
+;; time is time elapsed in seconds (with decimal for sub seconds)
+(defmethod motion-step ((motion motion) time)
+  ; x = x +v*t + 1/2 * a * t^2
+  (dotimes (i 3) (progn
+		   (incf (aref (coords motion) i) 
+			 (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
+		   (incf (aref (velocity motion) i)
+			 (* time (aref (acceleration motion) i))))))
 
 (defclass game-object ()
   ((model :initarg :model :accessor model :initform (make-instance 'model))
    (motion :initarg :motion :accessor motion :initform (make-instance 'motion))
-   (coords :initarg :coords :accessor coords :initform (vector 0 0 0))
    (angles :initarg :angles :accessor angles :initform (vector 0 0 0))))
 
 
@@ -78,18 +85,14 @@
 
 
 
-(defparameter *diamond* 
-  (make-instance 'game-object
-		:model *diamond-model*
-		:coords (vector 0 0 -3)
-		:angles (vector 0 0 0)))
-
 (defparameter *world* nil)
 
 (defparameter *origin* (vector 0 0 -7))
+(defparameter *self* nil) ; (make-instance 'motion :coords (vector 0 0 -11)))
 (defparameter *orientation* (vector 0 1 0))
 
 (defparameter *velocity* 2) ; 1 unit / second
+(defparameter *acceleration* 2) ; 1 unit /second
 (defparameter *controls-active* '())
 
 (let ((time-units (/ 1.0 internal-time-units-per-second)))
@@ -200,12 +203,12 @@
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
-  (gl:translate (aref *origin* 0) (aref *origin* 1) (aref *origin* 2)) ;; eye
+  (gl:translate (aref (coords *self*) 0) (aref (coords *self*) 1) (aref (coords *self*) 2)) ;; eye
   (loop for entity across *world* do
        ;(let ((entity (aref *world* i)))
        (progn
 	 (gl:push-matrix)
-	 (gl:translate (aref (coords entity) 0) (aref (coords entity) 1) (aref (coords entity) 2))
+	 (gl:translate (aref (coords (motion entity)) 0) (aref (coords (motion entity)) 1) (aref (coords (motion entity)) 2))
    (gl:rotate (aref (angles entity) 0) 1 0 0)
    (gl:rotate (aref (angles entity) 1) 0 1 0)
    (gl:rotate (aref (angles entity) 2) 0 0 1)
@@ -229,31 +232,55 @@
    (sdl:update-display))
 
 (defun phys-step (time)
-  (loop for entity across *world* do
-       (accel (accelerator (motion entity)) entity time)
-       (let ((velocities (velocities (motion entity)))
-	     (coords (coords entity)))
-	 (incf (aref coords 0) (* time (aref velocities 0)))
-	 (incf (aref coords 1) (* time (aref velocities 1)))
-	 (incf (aref coords 2) (* time (aref velocities 2))))
-       (let ((v-angles (angles (motion entity)))
-	     (angles (angles entity)))
-	 (incf (aref angles 0) (* time (aref v-angles 0)))
-	 (incf (aref angles 1) (* time (aref v-angles 1)))
-	 (incf (aref angles 2) (* time (aref v-angles 2))))))
+  (motion-step *self* time)
+  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2)))
+  ;(loop for entity across *world* do
+  ;     (motion-step (motion entity) time)))
+;       (accel (accelerator (motion entity)) entity time)
+;       (let ((velocities (velocities (motion entity)))
+;	     (coords (coords (motion entity))))
+;	 (incf (aref coords 0) (* time (aref velocities 0)))
+;	 (incf (aref coords 1) (* time (aref velocities 1)))
+;	 (incf (aref coords 2) (* time (aref velocities 2))))))
+
+(defun thruster-on (key)
+  (case key 
+    ((:sdl-key-w) ; + z
+     (setf (aref (acceleration *self*) 2) *acceleration*))
+    ((:sdl-key-s) ; - z
+     (setf (aref (acceleration *self*) 2) (- *acceleration*)))
+    ((:sdl-key-q) ; + x
+     (setf (aref (acceleration *self*) 0) *acceleration*))
+    ((:sdl-key-a) ; - x
+     (setf (aref (acceleration *self*) 0) (- *acceleration*)))
+    ((:sdl-key-d) ; + y
+     (setf (aref (acceleration *self*) 1) *acceleration*))
+    ((:sdl-key-e) ; - y
+     (setf (aref (acceleration *self*) 1) (- *acceleration*)))
+    (otherwise (format t "~a~%" key))))
+
+(defun thruster-off (key)
+  (case key 
+    ((:sdl-key-w) ; + z
+     (setf (aref (acceleration *self*) 2) 0))
+    ((:sdl-key-s) ; - z
+     (setf (aref (acceleration *self*) 2) 0))
+    ((:sdl-key-q) ; + q
+     (setf (aref (acceleration *self*) 0) 0))
+    ((:sdl-key-a) ; - a
+     (setf (aref (acceleration *self*) 0) 0))
+    ((:sdl-key-e) ; + e
+     (setf (aref (acceleration *self*) 1) 0))
+    ((:sdl-key-d) ; - d
+     (setf (aref (acceleration *self*) 1) 0))
+    (otherwise (format t "~a~%" key))))
+
 
 (defun sim-step ()
   "draw a frame"
   (let* ((start-time (wall-time))
 	 (time (- start-time *last-time*)))
 	
-      (loop for key in *controls-active* do 
-	   (case key 
-	       ((:sdl-key-w) ; + z
-		(incf (aref *origin* 2) (* time *velocity*)))
-	       ((:sdl-key-s) ; - z
-		(decf (aref *origin* 2) (* time *velocity*)))
-	    (otherwise (format t "~a~%" key))))  
 
       (phys-step time)
       (draw time)
@@ -285,7 +312,7 @@
   (glu:perspective 50; 45 ;; FOV
 		   1.0 ;; aspect ratio(/ width (max height 1))
 		   1/10 ;; z near
-		   100 ;; z far
+		   1000 ;; z far
 		   )
 
   (gl:matrix-mode :modelview)
@@ -303,14 +330,11 @@
 		    (loop for i from 0 to 9 collecting
 			 (make-instance 'game-object 
 					:model *diamond-model*
-					:coords (vector (- (random 10) 5) (- (random 10) 5) (- (random 10) 5))
 					:angles (vector (random 360) (random 360) (random 360))
 					:motion (make-instance 'motion
-							       :angles (vector 
-									(- (random 620) 310)
-									(- (random 620) 310) 
-									(- (random 620) 310))
-							       :accelerator (make-instance 'circle-accel :origin (vector 0 0 0))))))))
+							       :coords (vector (- (random 10) 5) (- (random 10) 5) (- (random 10) 5))))))))
+							     
+							     
 									
 		     
 			    
@@ -320,6 +344,7 @@
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
   (setf *controls-active* '())
+  (setf *self* (make-instance 'motion :coords (vector 0 0 -11)))
 ;  (reshape)
   (populate-world)
 )
@@ -334,8 +359,8 @@
     (setf cl-opengl-bindings:*gl-get-proc-address* #'sdl-cffi::sdl-gl-get-proc-address)
     (sdl:with-events () 
       (:quit-event () t)
-      (:key-down-event (:key key) (push key  *controls-active*))
-      (:key-up-event (:key key) (setf *controls-active* (remove key *controls-active*)))
+      (:key-down-event (:key key) (thruster-on key)) ;(push key  *controls-active*))
+      (:key-up-event (:key key) (thruster-off key)) ;(setf *controls-active* (remove key *controls-active*)))
 		       
       (:idle ()
 	     ;; this lets slime keep working while the main loop is running
