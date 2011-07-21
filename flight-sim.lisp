@@ -53,7 +53,8 @@
 
 (defclass model ()
   ((vertices :initarg :vertices :accessor vertices :initform (vector))
-   (faces :initarg :faces :accessor faces :initform (vector))))
+   (faces :initarg :faces :accessor faces :initform (vector))
+   (face-colors :initarg :face-colors :accessor face-colors :initform (vector))))
 
 (defclass motion ()
   ((coords :initarg :coords :accessor coords :initform (vector 0 0 0))
@@ -83,13 +84,17 @@
 		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
 
-
+(defparameter *ship-model*
+  (make-instance 'model
+		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 -3) (-2 1 -3) (2 1 -3)))
+		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
+		 :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
 
 (defparameter *world* nil)
 
-(defparameter *origin* (vector 0 0 -7))
+;(defparameter *origin* (vector 0 0 -7))
 (defparameter *self* nil) ; (make-instance 'motion :coords (vector 0 0 -11)))
-(defparameter *orientation* (vector 0 1 0))
+;(defparameter *orientation* (vector 0 1 0))
 
 (defparameter *velocity* 2) ; 1 unit / second
 (defparameter *acceleration* 2) ; 1 unit /second
@@ -181,7 +186,7 @@
 ;	  (append (rotate-vertex-2d (third tri) rM) (third (third tri))))))
 ;
 
-(defun draw-triangle (tri time) 
+(defun draw-triangle (tri) 
   (let ((time (- (wall-time) *start-time*)))
   (gl:with-primitive :triangles
     (multiple-value-bind (red green blue) (shift-color time)
@@ -199,29 +204,39 @@
     (let ((v (aref tri 2)))
       (gl:vertex (aref v 0) (aref v 1) (aref v 2))))))
 
+(defun draw-entity (entity)
+  (gl:push-matrix)
+  (gl:translate (aref (coords (motion entity)) 0) (aref (coords (motion entity)) 1) (aref (coords (motion entity)) 2))
+  (gl:rotate (aref (angles entity) 0) 1 0 0)
+  (gl:rotate (aref (angles entity) 1) 0 1 0)
+  (gl:rotate (aref (angles entity) 2) 0 0 1)
+  (loop for face across (faces (model entity)) do
+       (draw-triangle (get-vertecies face (vertices (model entity)))))
+  (gl:pop-matrix))
+ 
+
 (defun draw (time)
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
-  (gl:translate (aref (coords *self*) 0) (aref (coords *self*) 1) (aref (coords *self*) 2)) ;; eye
+  (draw-entity (make-instance 'game-object :motion (make-instance 'motion :coords (vector 0 0 3)) :model *ship-model*))
+  (gl:translate  (aref (coords *self*) 0) (- (aref (coords *self*) 1)) (- (aref (coords *self*) 2))) ;; eye    
+  
   (loop for entity across *world* do
        ;(let ((entity (aref *world* i)))
-       (progn
-	 (gl:push-matrix)
-	 (gl:translate (aref (coords (motion entity)) 0) (aref (coords (motion entity)) 1) (aref (coords (motion entity)) 2))
-   (gl:rotate (aref (angles entity) 0) 1 0 0)
-   (gl:rotate (aref (angles entity) 1) 0 1 0)
-   (gl:rotate (aref (angles entity) 2) 0 0 1)
-   (loop for face across (faces (model entity)) do
-	(draw-triangle (get-vertecies face (vertices (model entity))) time))
-   (gl:pop-matrix)
-      ))
-      
-   (gl:matrix-mode :modelview)
-   (gl:load-identity)
+       (draw-entity entity))
+       
+  
+
+
+  
+  (gl:matrix-mode :modelview)
+  (gl:load-identity)
+  
+       
 ;      (gl:translate 0 -2 -7)
  ;     (gl:rotate 16 1  0 0)
-   (glu:look-at 0 0 1 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
+   (glu:look-at 0 0 -1 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
 		0 0 0 ;; center
 		0 1 0 ;; up in y pos
 		)
@@ -233,7 +248,9 @@
 
 (defun phys-step (time)
   (motion-step *self* time)
-  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2)))
+  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2))
+  (format t "y-position: ~a y-velocity: ~a y-acceleration: ~a~%" (aref (coords *self*) 1) (aref (velocity *self*) 1) (aref (acceleration *self*) 1))
+  (format t "x-position: ~a x-velocity: ~a x-acceleration: ~a~%" (aref (coords *self*) 0) (aref (velocity *self*) 0) (aref (acceleration *self*) 0)))
   ;(loop for entity across *world* do
   ;     (motion-step (motion entity) time)))
 ;       (accel (accelerator (motion entity)) entity time)
