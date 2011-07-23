@@ -27,33 +27,10 @@
       (setf (aref arr i) (make-array w :initial-contents (car rest-list))))
     arr))
 
-(defclass accelerator () nil)
-
-(defclass circle-accel (accelerator)
-  ((origin :initarg :origin :accessor origin :initform (vector 0 0 0))))
-
-(defgeneric accel (accelerator motion time)
-  (:documentation "apply some modifications to a motion class based on some rules"))
-
-(defmethod accel ((accelerator accelerator) entity time)
-  nil)
-
-(defmethod accel ((accelerator circle-accel) entity time)
-  (format t "(circle-accel::accel)~%")
-  (let* ((o-vector (vector 
-		    (- (aref (origin accelerator) 0) (aref (coords entity) 0))
-		    (- (aref (origin accelerator) 1) (aref (coords entity) 1))
-		    (- (aref (origin accelerator) 2) (aref (coords entity) 2))))
-	 (t-vector (rotate* (make-rotation-matrix (/ pi 2) (/ pi 2) (/ pi 2)) o-vector)))
-    (setf (velocities (motion entity)) t-vector)))
-;    (setf (aref (velocities (motion entity) 0) (* time (aref t-vector 0)))
-;    (setf (aref (velocities (motion entity)) 0) (* time (aref t-vector 0)))
-;    (setf (aref (velocities (motion entity)) 0) (* time (aref t-vector 0)))))
-	 
-
 (defclass model ()
   ((vertices :initarg :vertices :accessor vertices :initform (vector))
    (faces :initarg :faces :accessor faces :initform (vector))
+   (colors :initarg :colors :accessor colors :initform (vector))
    (face-colors :initarg :face-colors :accessor face-colors :initform (vector))))
 
 (defclass motion ()
@@ -86,9 +63,10 @@
 
 (defparameter *ship-model*
   (make-instance 'model
-		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 -3) (-2 1 -3) (2 1 -3)))
+		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 3) (-2 0 3) (2 0 3)))
 		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
-		 :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
+		 :colors (make-2d-array 2 3 '((196 196 196) (32 32 32)))
+		 :face-colors (make-2d-array 4 3 '((0 0 0) (0 0 0) (0 0 0) (1 1 1)))))
 
 (defparameter *world* nil)
 
@@ -185,22 +163,28 @@
 ;	  (append (rotate-vertex-2d (second tri) rM) '((third (second tri))))
 ;	  (append (rotate-vertex-2d (third tri) rM) (third (third tri))))))
 ;
+(defun scale-colors (c) 
+  (make-array 3 :initial-contents (loop for ci across c collecting (/ ci 255))))
+  
 
-(defun draw-triangle (tri) 
+(defun draw-triangle (tri colors) 
   (let ((time (- (wall-time) *start-time*)))
   (gl:with-primitive :triangles
-    (multiple-value-bind (red green blue) (shift-color time)
-      (gl:color red green blue))
+    ;(multiple-value-bind (red green blue) (shift-color time)
+    (let ((c (scale-colors (aref colors 0))))
+      (gl:color (aref c 0) (aref c 1) (aref c 2)))
     (let ((v (aref tri 0)))
       (gl:vertex (aref v 0) (aref v 1) (aref v 2)))
     
-    (multiple-value-bind (green blue red) (shift-color time)
-      (gl:color red green blue))
+    ;(multiple-value-bind (green blue red) (shift-color time)
+    (let ((c (scale-colors (aref colors 1))))
+      (gl:color (aref c 0) (aref c 1) (aref c 2)))
     (let ((v (aref tri 1)))
       (gl:vertex (aref v 0) (aref v 1) (aref v 2)))
     
-    (multiple-value-bind (blue green red) (shift-color time)
-      (gl:color red green blue))
+    ;(multiple-value-bind (blue green red) (shift-color time)
+    (let ((c (scale-colors (aref colors 2))))
+      (gl:color (aref c 0) (aref c 1) (aref c 2)))
     (let ((v (aref tri 2)))
       (gl:vertex (aref v 0) (aref v 1) (aref v 2))))))
 
@@ -210,8 +194,9 @@
   (gl:rotate (aref (angles entity) 0) 1 0 0)
   (gl:rotate (aref (angles entity) 1) 0 1 0)
   (gl:rotate (aref (angles entity) 2) 0 0 1)
-  (loop for face across (faces (model entity)) do
-       (draw-triangle (get-vertecies face (vertices (model entity)))))
+  (loop for i from 0 to (1- (length (faces (model entity)))) do
+       (draw-triangle (get-vertecies (aref (faces (model entity)) i) (vertices (model entity)))
+		      (get-vertecies (aref (face-colors (model entity)) i) (colors (model entity)))))
   (gl:pop-matrix))
  
 
@@ -219,8 +204,9 @@
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
-  (draw-entity (make-instance 'game-object :motion (make-instance 'motion :coords (vector 0 0 3)) :model *ship-model*))
-  (gl:translate  (aref (coords *self*) 0) (- (aref (coords *self*) 1)) (- (aref (coords *self*) 2))) ;; eye    
+  (draw-entity (make-instance 'game-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model*))
+
+  (gl:translate  (- (aref (coords *self*) 0)) (- (aref (coords *self*) 1)) (- (aref (coords *self*) 2))) ;; eye    
   
   (loop for entity across *world* do
        ;(let ((entity (aref *world* i)))
@@ -236,7 +222,7 @@
        
 ;      (gl:translate 0 -2 -7)
  ;     (gl:rotate 16 1  0 0)
-   (glu:look-at 0 0 -1 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
+   (glu:look-at 0 6 10 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
 		0 0 0 ;; center
 		0 1 0 ;; up in y pos
 		)
@@ -263,16 +249,16 @@
 (defun thruster-on (key)
   (case key 
     ((:sdl-key-w) ; + z
-     (setf (aref (acceleration *self*) 2) *acceleration*))
-    ((:sdl-key-s) ; - z
      (setf (aref (acceleration *self*) 2) (- *acceleration*)))
+    ((:sdl-key-s) ; - z
+     (setf (aref (acceleration *self*) 2) *acceleration*))
     ((:sdl-key-q) ; + x
      (setf (aref (acceleration *self*) 0) *acceleration*))
     ((:sdl-key-a) ; - x
      (setf (aref (acceleration *self*) 0) (- *acceleration*)))
-    ((:sdl-key-d) ; + y
+    ((:sdl-key-e) ; + y
      (setf (aref (acceleration *self*) 1) *acceleration*))
-    ((:sdl-key-e) ; - y
+    ((:sdl-key-d) ; - y
      (setf (aref (acceleration *self*) 1) (- *acceleration*)))
     (otherwise (format t "~a~%" key))))
 
@@ -345,11 +331,16 @@
   (setf *world* 
 	(make-array 10 :initial-contents
 		    (loop for i from 0 to 9 collecting
-			 (make-instance 'game-object 
-					:model *diamond-model*
+			 (let ((e (make-instance 'game-object 
+					:model (make-instance 'model
+							      :vertices (vertices *diamond-model*)
+							      :faces (faces *diamond-model*))
 					:angles (vector (random 360) (random 360) (random 360))
 					:motion (make-instance 'motion
-							       :coords (vector (- (random 10) 5) (- (random 10) 5) (- (random 10) 5))))))))
+							       :coords (vector (- (random 10) 5) (- (random 10) 5) (- (random 10) 5))))))
+			   (setf (colors (model e)) (make-2d-array 3 3 `((,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)))))
+			   (setf (face-colors (model e)) (make-2d-array 8 3 '((0 1 1) (0 1 1) (0 1 1) (0 1 1) (1 2 1) (1 2 1) (1 2 1) (1 2 1))))
+			   e)))))
 							     
 							     
 									
@@ -361,7 +352,7 @@
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
   (setf *controls-active* '())
-  (setf *self* (make-instance 'motion :coords (vector 0 0 -11)))
+  (setf *self* (make-instance 'motion :coords (vector 0 0 11)))
 ;  (reshape)
   (populate-world)
 )
