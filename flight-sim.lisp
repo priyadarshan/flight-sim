@@ -61,12 +61,22 @@
 		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
 
+(defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil)
+  (make-instance 'model
+		 :vertices points
+		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
+		 :colors colors
+)))		 
+;:face-colors (if (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))))
+
+
 (defparameter *ship-model*
   (make-instance 'model
 		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 3) (-2 0 3) (2 0 3)))
 		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
 		 :colors (make-2d-array 2 3 '((196 196 196) (32 32 32)))
 		 :face-colors (make-2d-array 4 3 '((0 0 0) (0 0 0) (0 0 0) (1 1 1)))))
+
 
 (defparameter *world* nil)
 
@@ -200,7 +210,7 @@
   (gl:pop-matrix))
  
 
-(defun draw (time)
+(defun draw ()
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
@@ -209,8 +219,9 @@
   (gl:translate  (- (aref (coords *self*) 0)) (- (aref (coords *self*) 1)) (- (aref (coords *self*) 2))) ;; eye    
   
   (loop for entity across *world* do
-       ;(let ((entity (aref *world* i)))
-       (draw-entity entity))
+       ; only draw if its infront of me
+       (if (< (aref (coords (motion entity)) 2) (aref (coords *self*) 2)) 
+	   (draw-entity entity)))
        
   
 
@@ -233,10 +244,10 @@
    (sdl:update-display))
 
 (defun phys-step (time)
-  (motion-step *self* time)
-  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2))
-  (format t "y-position: ~a y-velocity: ~a y-acceleration: ~a~%" (aref (coords *self*) 1) (aref (velocity *self*) 1) (aref (acceleration *self*) 1))
-  (format t "x-position: ~a x-velocity: ~a x-acceleration: ~a~%" (aref (coords *self*) 0) (aref (velocity *self*) 0) (aref (acceleration *self*) 0)))
+  (motion-step *self* time))
+;  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2))
+;  (format t "y-position: ~a y-velocity: ~a y-acceleration: ~a~%" (aref (coords *self*) 1) (aref (velocity *self*) 1) (aref (acceleration *self*) 1))
+;  (format t "x-position: ~a x-velocity: ~a x-acceleration: ~a~%" (aref (coords *self*) 0) (aref (velocity *self*) 0) (aref (acceleration *self*) 0)))
   ;(loop for entity across *world* do
   ;     (motion-step (motion entity) time)))
 ;       (accel (accelerator (motion entity)) entity time)
@@ -286,7 +297,7 @@
 	
 
       (phys-step time)
-      (draw time)
+      (draw)
       
 
       (incf *num-frames*)
@@ -329,15 +340,15 @@
 
 (defun populate-world ()
   (setf *world* 
-	(make-array 10 :initial-contents
-		    (loop for i from 0 to 9 collecting
+	(make-array 101 :initial-contents
+		    (loop for i from 0 to 100 collecting
 			 (let ((e (make-instance 'game-object 
 					:model (make-instance 'model
 							      :vertices (vertices *diamond-model*)
 							      :faces (faces *diamond-model*))
 					:angles (vector (random 360) (random 360) (random 360))
 					:motion (make-instance 'motion
-							       :coords (vector (- (random 10) 5) (- (random 10) 5) (- (random 10) 5))))))
+							       :coords (vector (- (random 75) 37) (- (random 75) 37) (- (random 200) ))))))
 			   (setf (colors (model e)) (make-2d-array 3 3 `((,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)))))
 			   (setf (face-colors (model e)) (make-2d-array 8 3 '((0 1 1) (0 1 1) (0 1 1) (0 1 1) (1 2 1) (1 2 1) (1 2 1) (1 2 1))))
 			   e)))))
