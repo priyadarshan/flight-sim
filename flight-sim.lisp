@@ -36,7 +36,7 @@
 
 (defclass model ()
   ((vertices :initarg :vertices :accessor vertices :initform (vector) :type shape-vector)
-    (faces :initarg :faces :accessor faces :initform (vector) :type shape-ref-vector )
+   (faces :initarg :faces :accessor faces :initform (vector) :type shape-ref-vector )
    (colors :initarg :colors :reader colors :initform (vector) :type shape-vector)
    (face-colors :initarg :face-colors :accessor face-colors :initform (vector) :type shape-ref-vector)))
 
@@ -70,10 +70,15 @@
 		   (incf (aref (velocity motion) i)
 			 (* time (aref (acceleration motion) i))))))
 
+
 (defclass game-object ()
   ((model :initarg :model :accessor model :initform (make-instance 'model))
    (motion :initarg :motion :accessor motion :initform (make-instance 'motion))
-   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))))
+   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))
+   (engine :initarg :engine :accessor engine :initform (make-instance 'game-object))))
+
+;; plist :: ( :objects (plist models) :active (list symbols))
+   ;(attachments :initarg :attachments :accessor attachments :initform nil)))
 
 
 (defparameter *diamond-model* 
@@ -95,6 +100,10 @@
 (defparameter *ship-model*
   (make-model-3pyramid (make-2d-array 4 3 '((0.0 0.0 0.0) (0.0 1.0 3.0) (-2.0 0.0 3.0) (2.0 0.0 3.0)))
 		       :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
+
+
+(defclass engine () 
+  (
 
 ;  (make-instance 'model
 ;		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 3) (-2 0 3) (2 0 3)))
@@ -239,11 +248,11 @@
   ;; move to eye position
   (draw-entity (make-instance 'game-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model*))
 
-  (gl:translate  (- (aref (coords *self*) 0)) (- (aref (coords *self*) 1)) (- (aref (coords *self*) 2))) ;; eye    
+  (gl:translate  (- (aref (coords (motion *self*)) 0)) (- (aref (coords (motion *self*)) 1)) (- (aref (coords (motion *self*)) 2))) ;; eye    
   
   (loop for entity across *world* do
        ; only draw if its infront of me
-       (if (< (aref (coords (motion entity)) 2) (+ 10  (aref (coords *self*) 2)))
+       (if (< (aref (coords (motion entity)) 2) (+ 10  (aref (coords (motion *self*)) 2)))
 	   (draw-entity entity)))
        
   
@@ -267,7 +276,7 @@
    (sdl:update-display))
 
 (defun phys-step (time)
-  (motion-step *self* time))
+  (motion-step (motion *self*) time))
 ;  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2))
 ;  (format t "y-position: ~a y-velocity: ~a y-acceleration: ~a~%" (aref (coords *self*) 1) (aref (velocity *self*) 1) (aref (acceleration *self*) 1))
 ;  (format t "x-position: ~a x-velocity: ~a x-acceleration: ~a~%" (aref (coords *self*) 0) (aref (velocity *self*) 0) (aref (acceleration *self*) 0)))
@@ -283,33 +292,33 @@
 (defun thruster-on (key)
   (case key 
     ((:sdl-key-w) ; + z
-     (setf (aref (acceleration *self*) 2) (- *acceleration*)))
+     (setf (aref (acceleration (motion *self*)) 2) (- *acceleration*)))
     ((:sdl-key-s) ; - z
-     (setf (aref (acceleration *self*) 2) *acceleration*))
+     (setf (aref (acceleration (motion *self*)) 2) *acceleration*))
     ((:sdl-key-q) ; + x
-     (setf (aref (acceleration *self*) 0) *acceleration*))
+     (setf (aref (acceleration (motion *self*)) 0) *acceleration*))
     ((:sdl-key-a) ; - x
-     (setf (aref (acceleration *self*) 0) (- *acceleration*)))
+     (setf (aref (acceleration (motion *self*)) 0) (- *acceleration*)))
     ((:sdl-key-e) ; + y
-     (setf (aref (acceleration *self*) 1) *acceleration*))
+     (setf (aref (acceleration (motion *self*)) 1) *acceleration*))
     ((:sdl-key-d) ; - y
-     (setf (aref (acceleration *self*) 1) (- *acceleration*)))
+     (setf (aref (acceleration (motion *self*)) 1) (- *acceleration*)))
     (otherwise (format t "~a~%" key))))
 
 (defun thruster-off (key)
   (case key 
     ((:sdl-key-w) ; + z
-     (setf (aref (acceleration *self*) 2) 0))
+     (setf (aref (acceleration (motion *self*)) 2) 0))
     ((:sdl-key-s) ; - z
-     (setf (aref (acceleration *self*) 2) 0))
+     (setf (aref (acceleration (motion *self*)) 2) 0))
     ((:sdl-key-q) ; + q
-     (setf (aref (acceleration *self*) 0) 0))
+     (setf (aref (acceleration (motion *self*)) 0) 0))
     ((:sdl-key-a) ; - a
-     (setf (aref (acceleration *self*) 0) 0))
+     (setf (aref (acceleration (motion *self*)) 0) 0))
     ((:sdl-key-e) ; + e
-     (setf (aref (acceleration *self*) 1) 0))
+     (setf (aref (acceleration (motion *self*)) 1) 0))
     ((:sdl-key-d) ; - d
-     (setf (aref (acceleration *self*) 1) 0))
+     (setf (aref (acceleration (motion *self*)) 1) 0))
     (otherwise (format t "~a~%" key))))
 
 
@@ -386,7 +395,13 @@
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
   (setf *controls-active* '())
-  (setf *self* (make-instance 'motion :coords (vector 0 0 11)))
+  (setf *self* (make-instance 'game-object 
+			      :motion (make-instance 'motion :coords (vector 0 0 11))
+			      :model *ship-model*
+			     ; :engine 
+			     ; (make-instance 'game-object :motion (make-instance 'motion :coords (vector 0.0 0.5 0.3))
+			;		     :model (make-model-3pyramid (make-2d-array 4 3 ''(
+					     ))
 ;  (reshape)
   (populate-world)
 )
