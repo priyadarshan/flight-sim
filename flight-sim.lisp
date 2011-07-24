@@ -27,11 +27,33 @@
       (setf (aref arr i) (make-array w :initial-contents (car rest-list))))
     arr))
 
+(deftype point-vector () '(simple-array float (*)))
+(deftype shape-vector () '(simple-array point-vector (*)))
+
+(deftype pos-int () '(integer 0 *))
+(deftype ref-vector () '(simple-array pos-int (*)))
+(deftype shape-ref-vector () '(simple-array ref-vector (*)))
+
 (defclass model ()
-  ((vertices :initarg :vertices :accessor vertices :initform (vector))
-   (faces :initarg :faces :accessor faces :initform (vector))
-   (colors :initarg :colors :accessor colors :initform (vector))
-   (face-colors :initarg :face-colors :accessor face-colors :initform (vector))))
+  ((vertices :initarg :vertices :accessor vertices :initform (vector) :type shape-vector)
+    (faces :initarg :faces :accessor faces :initform (vector) :type shape-ref-vector )
+   (colors :initarg :colors :reader colors :initform (vector) :type shape-vector)
+   (face-colors :initarg :face-colors :accessor face-colors :initform (vector) :type shape-ref-vector)))
+
+(defmethod scale-colors ((model model))
+  (let ((colors (colors model)))
+    (loop for i from 0 to (1- (length colors)) do 
+	 (loop for j from 0 to 2 do
+	      (setf (aref (aref colors i) j) (float (/ (aref (aref colors i) j) 255)))))))
+
+(defmethod initialize-instance :after ((model model) &key)
+  (scale-colors model))
+
+(defgeneric (setf colors) (colors model))
+
+(defmethod (setf colors) (colors (model model))
+  (setf (slot-value model 'colors) colors)
+  (scale-colors model))
 
 (defclass motion ()
   ((coords :initarg :coords :accessor coords :initform (vector 0 0 0))
@@ -56,26 +78,29 @@
 
 (defparameter *diamond-model* 
   (make-instance 'model
-		 :vertices (make-2d-array 6 3 '((0.0 1 0) (0.5 0 0.5) (0.5 0 -0.5) 
-						(-0.5 0 0.5) (-0.5 0 -0.5) (0.0 -1 0)))
+		 :vertices (make-2d-array 6 3 '((0.0 1.0 0.0) (0.5 0.0 0.5) (0.5 0.0 -0.5) 
+						(-0.5 0.0 0.5) (-0.5 0.0 -0.5) (0.0 -1.0 0.0)))
 		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
 
-(defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil)
+(defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil))
   (make-instance 'model
 		 :vertices points
 		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
-		 :colors colors
-)))		 
-;:face-colors (if (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))))
-
-
+		 :colors (if face-colors face-colors point-colors)
+		 :face-colors (if face-colors 
+				  (make-2d-array 4 3 '((0 0 0) (1 1 1) (2 2 2) (3 3 3)))
+				  (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))))
+	 
 (defparameter *ship-model*
-  (make-instance 'model
-		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 3) (-2 0 3) (2 0 3)))
-		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
-		 :colors (make-2d-array 2 3 '((196 196 196) (32 32 32)))
-		 :face-colors (make-2d-array 4 3 '((0 0 0) (0 0 0) (0 0 0) (1 1 1)))))
+  (make-model-3pyramid (make-2d-array 4 3 '((0.0 0.0 0.0) (0.0 1.0 3.0) (-2.0 0.0 3.0) (2.0 0.0 3.0)))
+		       :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
+
+;  (make-instance 'model
+;		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 3) (-2 0 3) (2 0 3)))
+;		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
+;		 :colors (make-2d-array 2 3 '((196 196 196) (32 32 32)))
+;		 :face-colors (make-2d-array 4 3 '((0 0 0) (0 0 0) (0 0 0) (1 1 1)))))
 
 
 (defparameter *world* nil)
@@ -173,30 +198,28 @@
 ;	  (append (rotate-vertex-2d (second tri) rM) '((third (second tri))))
 ;	  (append (rotate-vertex-2d (third tri) rM) (third (third tri))))))
 ;
-(defun scale-colors (c) 
-  (make-array 3 :initial-contents (loop for ci across c collecting (/ ci 255))))
+;(defun scale-colors (c) 
+;  (make-array 3 :initial-contents (loop for ci across c collecting (/ ci 255))))
   
 
-(defun draw-triangle (tri colors) 
-  (let ((time (- (wall-time) *start-time*)))
+(defun draw-triangle (tri colors)
+  (declare (type shape-vector tri))
+  (declare (type shape-vector colors))
   (gl:with-primitive :triangles
-    ;(multiple-value-bind (red green blue) (shift-color time)
-    (let ((c (scale-colors (aref colors 0))))
+    (let ((c (aref colors 0)))
       (gl:color (aref c 0) (aref c 1) (aref c 2)))
     (let ((v (aref tri 0)))
       (gl:vertex (aref v 0) (aref v 1) (aref v 2)))
     
-    ;(multiple-value-bind (green blue red) (shift-color time)
-    (let ((c (scale-colors (aref colors 1))))
+    (let ((c (aref colors 1)))
       (gl:color (aref c 0) (aref c 1) (aref c 2)))
     (let ((v (aref tri 1)))
       (gl:vertex (aref v 0) (aref v 1) (aref v 2)))
     
-    ;(multiple-value-bind (blue green red) (shift-color time)
-    (let ((c (scale-colors (aref colors 2))))
+    (let ((c (aref colors 2)))
       (gl:color (aref c 0) (aref c 1) (aref c 2)))
     (let ((v (aref tri 2)))
-      (gl:vertex (aref v 0) (aref v 1) (aref v 2))))))
+      (gl:vertex (aref v 0) (aref v 1) (aref v 2)))))
 
 (defun draw-entity (entity)
   (gl:push-matrix)
@@ -220,7 +243,7 @@
   
   (loop for entity across *world* do
        ; only draw if its infront of me
-       (if (< (aref (coords (motion entity)) 2) (aref (coords *self*) 2)) 
+       (if (< (aref (coords (motion entity)) 2) (+ 10  (aref (coords *self*) 2)))
 	   (draw-entity entity)))
        
   
