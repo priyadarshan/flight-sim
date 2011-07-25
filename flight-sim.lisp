@@ -74,10 +74,45 @@
 (defclass game-object ()
   ((model :initarg :model :accessor model :initform (make-instance 'model))
    (motion :initarg :motion :accessor motion :initform (make-instance 'motion))
-   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))
-   (engine :initarg :engine :accessor engine :initform (make-instance 'game-object))))
+   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))))
 
-;; plist :: ( :objects (plist models) :active (list symbols))
+(defclass engine-object (game-object)
+  ((active :initarg :active :reader active :initform nil)
+   (start-time :initarg :start-time :reader start-time :initform nil)))
+
+(defgeneric engine-start (engine time))
+(defmethod engine-start ((engine engine-object) time)
+  (setf (slot-value engine 'active) t)
+  (setf (slot-value engine 'start-time) time))
+
+(defgeneric engine-stop (engine))
+(defmethod engine-stop ((engine engine-object))
+  (setf (slot-value engine 'active) nil))
+
+;; function to determine value lying on start to end taking time duration at now
+(defun converge (start end duration now)
+  (float (+ start (* (- end start) (if (eql now 0.0) 0.0 (/ (min now duration) duration))))))
+
+; take 2 seconds to fully fire
+(defmethod engine-genmodel ((engine engine-object))
+  (let ((time (- (wall-time) (start-time engine))))
+    (setf (model engine)
+	(make-model-3pyramid (make-2d-array 4 3 
+					    `((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
+					      ; z goes from 0 to 1 in 2 seconds
+					      (0.0 0.0 ,(converge 0 1 2 time))))
+			     :point-colors (make-2d-array 4 3 `(
+								(,(converge 96 255 2 time) ,(converge 0 255 2 time) 0)
+								(,(converge 96 255 2 time) ,(converge 0 255 2 time) 0)
+								(,(converge 96 255 2 time) ,(converge 0 255 2 time) 0)
+								(,(converge 255 255 2 time) ,(converge 0 255 2 time) ,(converge 0 255 2 time))))))))
+
+
+(defclass powered-object (game-object)
+  ;; plist :: ( :objects (plist models) :active (list symbols))
+  ((engine :initarg :engine :accessor engine :initform nil)))
+
+
    ;(attachments :initarg :attachments :accessor attachments :initform nil)))
 
 
@@ -102,8 +137,8 @@
 		       :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
 
 
-(defclass engine () 
-  (
+;(defclass engine () 
+;  (
 
 ;  (make-instance 'model
 ;		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 3) (-2 0 3) (2 0 3)))
@@ -231,29 +266,46 @@
       (gl:vertex (aref v 0) (aref v 1) (aref v 2)))))
 
 (defun draw-entity (entity)
-  (gl:push-matrix)
   (gl:translate (aref (coords (motion entity)) 0) (aref (coords (motion entity)) 1) (aref (coords (motion entity)) 2))
   (gl:rotate (aref (angles entity) 0) 1 0 0)
   (gl:rotate (aref (angles entity) 1) 0 1 0)
   (gl:rotate (aref (angles entity) 2) 0 0 1)
   (loop for i from 0 to (1- (length (faces (model entity)))) do
        (draw-triangle (get-vertecies (aref (faces (model entity)) i) (vertices (model entity)))
-		      (get-vertecies (aref (face-colors (model entity)) i) (colors (model entity)))))
+		      (get-vertecies (aref (face-colors (model entity)) i) (colors (model entity))))))
+
+(defgeneric object-draw (object))
+
+(defmethod object-draw :before ((object game-object))
+  (gl:push-matrix))
+
+(defmethod object-draw :after ((object game-object))
   (gl:pop-matrix))
+
+(defmethod object-draw ((object game-object))
+  (draw-entity object))
+
+(defmethod object-draw ((object powered-object))
+  (draw-entity object)
+  (if (eql (active (engine object)) t)
+      (progn
+	(setf (model (engine object)) (engine-genmodel (engine object)))
+	(gl:translate 0 0 0)
+	(object-draw (engine object)))))
  
 
 (defun draw ()
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
-  (draw-entity (make-instance 'game-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model*))
+  (object-draw (make-instance 'powered-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model* :engine (engine *self*)))
 
   (gl:translate  (- (aref (coords (motion *self*)) 0)) (- (aref (coords (motion *self*)) 1)) (- (aref (coords (motion *self*)) 2))) ;; eye    
   
   (loop for entity across *world* do
        ; only draw if its infront of me
        (if (< (aref (coords (motion entity)) 2) (+ 10  (aref (coords (motion *self*)) 2)))
-	   (draw-entity entity)))
+	   (object-draw entity)))
        
   
 
@@ -292,7 +344,10 @@
 (defun thruster-on (key)
   (case key 
     ((:sdl-key-w) ; + z
-     (setf (aref (acceleration (motion *self*)) 2) (- *acceleration*)))
+     (progn
+       (setf (aref (acceleration (motion *self*)) 2) (- *acceleration*))
+       (engine-start (engine *self*) (wall-time))))
+     
     ((:sdl-key-s) ; - z
      (setf (aref (acceleration (motion *self*)) 2) *acceleration*))
     ((:sdl-key-q) ; + x
@@ -308,7 +363,10 @@
 (defun thruster-off (key)
   (case key 
     ((:sdl-key-w) ; + z
-     (setf (aref (acceleration (motion *self*)) 2) 0))
+     (progn
+       (setf (aref (acceleration (motion *self*)) 2) 0)
+       (engine-stop (engine *self*))))
+     
     ((:sdl-key-s) ; - z
      (setf (aref (acceleration (motion *self*)) 2) 0))
     ((:sdl-key-q) ; + q
@@ -395,14 +453,12 @@
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
   (setf *controls-active* '())
-  (setf *self* (make-instance 'game-object 
+  (setf *self* (make-instance 'powered-object 
 			      :motion (make-instance 'motion :coords (vector 0 0 11))
 			      :model *ship-model*
-			     ; :engine 
-			     ; (make-instance 'game-object :motion (make-instance 'motion :coords (vector 0.0 0.5 0.3))
-			;		     :model (make-model-3pyramid (make-2d-array 4 3 ''(
+			      :engine (make-instance 'engine-object 
+						     :motion (make-instance 'motion :coords (vector 0 0.5 3.0)))
 					     ))
-;  (reshape)
   (populate-world)
 )
 
