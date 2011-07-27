@@ -4,81 +4,26 @@
 
 ;;; "flight-sim" goes here. Hacks and glory await!
 
-(defmacro restartable (&body body)
-  "Helper macro since we use continue restarts a lot 
-   (remember to hit C in slime or pick the restart so errors don't kill the app"
-  `(restart-case
-       (progn ,@body)
-     (continue () :report "Continue")))
 
-;;; degrees to radians
-(defmacro dtr (d)
-  `(/ (* ,d pi) 180))
 
-;;; radians to degress
-(defmacro rtd (r)
-  `(/ (* ,r 180) pi))
-
-(defun make-2d-array (h w contents)
-  (let ((arr (make-array h)))
-    (do ((i 0 (incf i))
-	 (rest-list contents (rest rest-list)))
-	((eql i h)) 
-      (setf (aref arr i) (make-array w :initial-contents (car rest-list))))
-    arr))
-
-(deftype point-vector () '(simple-array float (*)))
-(deftype shape-vector () '(simple-array point-vector (*)))
-
-(deftype pos-int () '(integer 0 *))
-(deftype ref-vector () '(simple-array pos-int (*)))
-(deftype shape-ref-vector () '(simple-array ref-vector (*)))
-
-(defclass model ()
-  ((vertices :initarg :vertices :accessor vertices :initform (vector) :type shape-vector)
-   (faces :initarg :faces :accessor faces :initform (vector) :type shape-ref-vector )
-   (colors :initarg :colors :reader colors :initform (vector) :type shape-vector)
-   (face-colors :initarg :face-colors :accessor face-colors :initform (vector) :type shape-ref-vector)))
-
-(defmethod scale-colors ((model model))
-  (let ((colors (colors model)))
-    (loop for i from 0 to (1- (length colors)) do 
-	 (loop for j from 0 to 2 do
-	      (setf (aref (aref colors i) j) (float (/ (aref (aref colors i) j) 255)))))))
-
-(defmethod initialize-instance :after ((model model) &key)
-  (scale-colors model))
-
-(defgeneric (setf colors) (colors model))
-
-(defmethod (setf colors) (colors (model model))
-  (setf (slot-value model 'colors) colors)
-  (scale-colors model))
-
-(defclass motion ()
-  ((coords :initarg :coords :accessor coords :initform (vector 0 0 0))
-   (velocity :initarg :velocity :accessor velocity :initform (vector 0 0 0))
-   (acceleration :initarg :acceleration :accessor acceleration :initform (vector 0 0 0))
-   (jerk :initarg :jerk :accessor jerk :initform (vector 0 0 0))))
    
-;; time is time elapsed in seconds (with decimal for sub seconds)
-(defmethod motion-step ((motion motion) time)
-  ; x = x +v*t + 1/2 * a * t^2
-  (dotimes (i 3) (progn
-		   (incf (aref (coords motion) i) 
-			 (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
-		   (incf (aref (velocity motion) i)
-			 (* time (aref (acceleration motion) i))))))
 
 
 (defclass game-object ()
   ((model :initarg :model :accessor model :initform (make-instance 'model))
-   (motion :initarg :motion :accessor motion :initform (make-instance 'motion))
-   (angles :initarg :angles :accessor angles :initform (vector 0 0 0))))
+   (bosy :initarg :body :accessor body :inotform (make-instance 'body))))
+
 
 (defclass engine-object (game-object)
   ((active :initarg :active :reader active :initform nil)
-   (start-time :initarg :start-time :reader start-time :initform nil)))
+   (start-time :initarg :start-time :reader start-time :initform nil)
+   (forces :initarg :forces :accessor forces :initform '())))
+
+(defgeneric activate-engine (object engine-sym))
+
+(defmethod activate-engine ((object powered-object) engine-sym)
+  (push :engine-sym (getf (engines object) :active))
+  (engine-start (getf (getf (engines object) :engines) engine-sym) (wall-time)))
 
 (defgeneric engine-start (engine time))
 (defmethod engine-start ((engine engine-object) time)
@@ -102,18 +47,39 @@
 					      ; z goes from 0 to 1 in 2 seconds
 					      (0.0 0.0 ,(converge 0 1 2 time))))
 			     :point-colors (make-2d-array 4 3 `(
-								(,(converge 96 255 2 time) ,(converge 0 255 2 time) 0)
-								(,(converge 96 255 2 time) ,(converge 0 255 2 time) 0)
-								(,(converge 96 255 2 time) ,(converge 0 255 2 time) 0)
-								(,(converge 255 255 2 time) ,(converge 0 255 2 time) ,(converge 0 255 2 time))))))))
+								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
+								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
+								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
+								(,(converge 0 255 2 time) ,(converge 0 255 2 time) ,(converge 64 255 2 time))))))))
 
 
 (defclass powered-object (game-object)
   ;; plist :: ( :objects (plist models) :active (list symbols))
-  ((engine :initarg :engine :accessor engine :initform nil)))
+  ((engines :initarg :engines :accessor engines :initform '(:engines () :active ()))))
+;  ((engine :initarg :engine :accessor engine :initform nil)))
 
 
    ;(attachments :initarg :attachments :accessor attachments :initform nil)))
+
+;; time is time elapsed in seconds (with decimal for sub seconds)
+(defmethod time-step ((engine engine) object time)
+  ; f = ma
+  (let ((accel (/ (force engine) (mass object)))) 
+  ; x = x +v*t + 1/2 * a * t^2
+  (dotimes (i 3) (progn
+		   (incf (aref (coords motion) i) 
+			 (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
+		   (incf (aref (velocity motion) i)
+			 (* time (aref (acceleration motion) i))))))
+
+
+
+(defmethod time-step ((object powered-object) time)  
+  (loop for engine in (loop for engine-sym in (getf (engines object) :active) collecting (getf (engines engines) engine-sym)) do
+       (time-step engine object time)))	 
+ ; (motion-step (motion *self*) time))
+
+
 
 
 (defparameter *diamond-model* 
@@ -328,7 +294,8 @@
    (sdl:update-display))
 
 (defun phys-step (time)
-  (motion-step (motion *self*) time))
+  (time-step *self* time))
+
 ;  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2))
 ;  (format t "y-position: ~a y-velocity: ~a y-acceleration: ~a~%" (aref (coords *self*) 1) (aref (velocity *self*) 1) (aref (acceleration *self*) 1))
 ;  (format t "x-position: ~a x-velocity: ~a x-acceleration: ~a~%" (aref (coords *self*) 0) (aref (velocity *self*) 0) (aref (acceleration *self*) 0)))
@@ -345,8 +312,9 @@
   (case key 
     ((:sdl-key-w) ; + z
      (progn
-       (setf (aref (acceleration (motion *self*)) 2) (- *acceleration*))
-       (engine-start (engine *self*) (wall-time))))
+       ;(setf (aref (acceleration (motion *self*)) 2) (- *acceleration*))
+       ;(engine-start (engine *self*) (wall-time))))
+       (activate-engine *self* :thrust))) 
      
     ((:sdl-key-s) ; - z
      (setf (aref (acceleration (motion *self*)) 2) *acceleration*))
@@ -456,9 +424,11 @@
   (setf *self* (make-instance 'powered-object 
 			      :motion (make-instance 'motion :coords (vector 0 0 11))
 			      :model *ship-model*
-			      :engine (make-instance 'engine-object 
-						     :motion (make-instance 'motion :coords (vector 0 0.5 3.0)))
-					     ))
+			      :engines (list :engines (list :thrust 
+						       (make-instance 'engine-object 
+								      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))
+								      :forces (list (make-instance 'force :newtons 10 :direction '(0 0 1))))))))
+					     
   (populate-world)
 )
 
