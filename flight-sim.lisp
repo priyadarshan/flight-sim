@@ -5,13 +5,9 @@
 ;;; "flight-sim" goes here. Hacks and glory await!
 
 
-
-   
-
-
 (defclass game-object ()
   ((model :initarg :model :accessor model :initform (make-instance 'model))
-   (bosy :initarg :body :accessor body :inotform (make-instance 'body))))
+   (body :initarg :body :accessor body :inotform (make-instance 'body))))
 
 
 (defclass engine-object (game-object)
@@ -34,9 +30,6 @@
 (defmethod engine-stop ((engine engine-object))
   (setf (slot-value engine 'active) nil))
 
-;; function to determine value lying on start to end taking time duration at now
-(defun converge (start end duration now)
-  (float (+ start (* (- end start) (if (eql now 0.0) 0.0 (/ (min now duration) duration))))))
 
 ; take 2 seconds to fully fire
 (defmethod engine-genmodel ((engine engine-object))
@@ -82,26 +75,6 @@
 
 
 
-(defparameter *diamond-model* 
-  (make-instance 'model
-		 :vertices (make-2d-array 6 3 '((0.0 1.0 0.0) (0.5 0.0 0.5) (0.5 0.0 -0.5) 
-						(-0.5 0.0 0.5) (-0.5 0.0 -0.5) (0.0 -1.0 0.0)))
-		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
-					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
-
-(defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil))
-  (make-instance 'model
-		 :vertices points
-		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
-		 :colors (if face-colors face-colors point-colors)
-		 :face-colors (if face-colors 
-				  (make-2d-array 4 3 '((0 0 0) (1 1 1) (2 2 2) (3 3 3)))
-				  (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))))
-	 
-(defparameter *ship-model*
-  (make-model-3pyramid (make-2d-array 4 3 '((0.0 0.0 0.0) (0.0 1.0 3.0) (-2.0 0.0 3.0) (2.0 0.0 3.0)))
-		       :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
-
 
 ;(defclass engine () 
 ;  (
@@ -115,18 +88,12 @@
 
 (defparameter *world* nil)
 
-;(defparameter *origin* (vector 0 0 -7))
-(defparameter *self* nil) ; (make-instance 'motion :coords (vector 0 0 -11)))
-;(defparameter *orientation* (vector 0 1 0))
+(defparameter *self* nil)
 
 (defparameter *velocity* 2) ; 1 unit / second
 (defparameter *acceleration* 2) ; 1 unit /second
 (defparameter *controls-active* '())
 
-(let ((time-units (/ 1.0 internal-time-units-per-second)))
-  (defun wall-time (&key (offset 0))
-    (+ (* (get-internal-real-time) time-units)
-       offset)))
 
 
 (defparameter *start-time* (wall-time))
@@ -134,83 +101,6 @@
 (defparameter *last-time* nil)
 (defparameter *num-frames* 0)
 
-;;(defparameter *t1* '( (-0.5 -0.5 0) (0 0.5 0) (0.5 -0.5 0)))
-
-(defun get-vertecies (faces vertices) 
-  (make-array (length faces) :initial-contents
-	      (loop for i across faces collecting (aref vertices i))))
-
-
-
-(defun shift-color (time) 
-  (values 
-   ;;; red
-   (/ (+ (* (sin (+ (* 0.3 time) 0)) 127) 128) 255)
-   ;;; green
-   (/ (+ (* (sin (+ (* 0.3 time) (* 2/3 PI))) 127 ) 128) 255)
-   ;;; blue
-   (/ (+ (* (sin (+ (* 0.3 time) (* 4/3 PI))) 127) 128) 255)))
-
-
-;; returns a real lisp 2d array
-(defun make-rotation-matrix (xa ya za) 
-  (let ((sxa (sin xa))
-	(cxa (cos xa))
-	(sya (sin ya))
-	(cya (cos ya))
-	(sza (sin za))
-	(cza (cos za)))
-    (make-array '(3 3) :initial-contents (list (list (* cya cza) (+ (- (* cxa sza)) (* sxa sya cza)) (+ (* sxa sza) (* cxa sya cza)))
-					   (list (* cya sza) (+ (* cxa cza) (* sxa sya sza)) (+ (- (* sxa cza)) (* cxa sya sza)))
-					   (list (- sya) (* sxa cya) (* cxa cya))))))
-					   
-(defun rotate* (m v)
-  (let ((result (make-array 3 :initial-element 0)))
-    (dotimes (x 3)
-      (dotimes (y 3)
-	(incf (aref result x) (* (aref v y) (aref m x y)))))
-    result))
-	
-(defun translate-point (v1 v2 &optional (fn #'+)) 
-  (let ((result (make-array 3)))
-    (dotimes (i 3)
-      (setf (aref result i) (funcall fn (aref v1 i) (aref v2 i))))
-    result))
-  
-
-(defun translate-triangle (tri position)
-  (make-array (length tri) :initial-contents
-	      (loop for v across tri collecting (translate-point position v))))
-
-;(defun rotate-vertex-2d (v rM)
-;  v)
- ;; (let ((result (lm:* rM (lm:vector (first v) (second v)))))
- ;;   (list (lm:elt result 0) (lm:elt result 1))))
- 
-;; (let* ((x (first v))
-;;	 (y (second v))
-;;	 (theta (atan (if (eql 0 x) 1000000 (/ y x))))
-;;	 (hyp (sqrt (+ (* x x) (* y y)))))
- ;;   (list (/ (cos (+ theta time)) hyp) (/ (sin (+ theta time)) hyp) (third v))))
-;    (list (+ (first v) (/ (sin time) 2)) (+ (second v) (/ (cos time) 2))   (third v)))
-
-(defun rotate-triangle (tri m)
-  (make-array (length tri) :initial-contents
-	      (loop for v across tri collecting (rotate* m v))))
-
-;  (let* ((angle (/ time 1000))
-;	 (cos-a (cos angle))
-;	 (sin-a (sin angle))
-;	 (rM nil)) ;lm:make-matrix 2 2 :initial-elements 
-;		;	     '(cos-a sin-a
-;		;	       (- sin-a) cos-a))))
- ;   (list (append (rotate-vertex-2d (first tri) rM) '((third (firt tri))))
-;	  (append (rotate-vertex-2d (second tri) rM) '((third (second tri))))
-;	  (append (rotate-vertex-2d (third tri) rM) (third (third tri))))))
-;
-;(defun scale-colors (c) 
-;  (make-array 3 :initial-contents (loop for ci across c collecting (/ ci 255))))
-  
 
 (defun draw-triangle (tri colors)
   (declare (type shape-vector tri))
@@ -272,22 +162,14 @@
        ; only draw if its infront of me
        (if (< (aref (coords (motion entity)) 2) (+ 10  (aref (coords (motion *self*)) 2)))
 	   (object-draw entity)))
-       
-  
-
-
   
   (gl:matrix-mode :modelview)
   (gl:load-identity)
   
-       
-;      (gl:translate 0 -2 -7)
- ;     (gl:rotate 16 1  0 0)
-   (glu:look-at 0 6 10 ;(aref *origin* 0) (aref *origin* 1) (aref *origin* 2) ;; eye
+   (glu:look-at 0 6 10 ;; pos
 		0 0 0 ;; center
 		0 1 0 ;; up in y pos
 		)
-	   
       
     ;; finish the frame
    (gl:flush)
@@ -296,17 +178,6 @@
 (defun phys-step (time)
   (time-step *self* time))
 
-;  (format t "z-position: ~a z-velocity: ~a z-acceleration: ~a~%" (aref (coords *self*) 2) (aref (velocity *self*) 2) (aref (acceleration *self*) 2))
-;  (format t "y-position: ~a y-velocity: ~a y-acceleration: ~a~%" (aref (coords *self*) 1) (aref (velocity *self*) 1) (aref (acceleration *self*) 1))
-;  (format t "x-position: ~a x-velocity: ~a x-acceleration: ~a~%" (aref (coords *self*) 0) (aref (velocity *self*) 0) (aref (acceleration *self*) 0)))
-  ;(loop for entity across *world* do
-  ;     (motion-step (motion entity) time)))
-;       (accel (accelerator (motion entity)) entity time)
-;       (let ((velocities (velocities (motion entity)))
-;	     (coords (coords (motion entity))))
-;	 (incf (aref coords 0) (* time (aref velocities 0)))
-;	 (incf (aref coords 1) (* time (aref velocities 1)))
-;	 (incf (aref coords 2) (* time (aref velocities 2))))))
 
 (defun thruster-on (key)
   (case key 
@@ -388,12 +259,6 @@
 		   )
 
   (gl:matrix-mode :modelview)
- ; (gl:load-identity)
-  ;(glu:look-at 0 2 7 ;; eye
-;	       0 0 0 ;; center
-;	       0 1 0 ;; up in y pos
-;	       )
-  
 )
 
 (defun populate-world ()
@@ -410,11 +275,6 @@
 			   (setf (colors (model e)) (make-2d-array 3 3 `((,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)))))
 			   (setf (face-colors (model e)) (make-2d-array 8 3 '((0 1 1) (0 1 1) (0 1 1) (0 1 1) (1 2 1) (1 2 1) (1 2 1) (1 2 1))))
 			   e)))))
-							     
-							     
-									
-		     
-			    
 
 (defun init () 
   (setf *start-time* (wall-time))

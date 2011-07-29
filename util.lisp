@@ -14,3 +14,8 @@
 	((eql i h)) 
       (setf (aref arr i) (make-array w :initial-contents (car rest-list))))
     arr))
+
+(let ((time-units (/ 1.0 internal-time-units-per-second)))
+  (defun wall-time (&key (offset 0))
+    (+ (* (get-internal-real-time) time-units)
+       offset)))
