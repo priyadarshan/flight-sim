@@ -5,10 +5,6 @@
 ;;; "flight-sim" goes here. Hacks and glory await!
 
 
-(defclass game-object ()
-  ((model :initarg :model :accessor model :initform (make-instance 'model))
-   (body :initarg :body :accessor body :inotform (make-instance 'body))))
-
 
 (defclass engine-object (game-object)
   ((active :initarg :active :reader active :initform nil)
@@ -102,44 +98,7 @@
 (defparameter *num-frames* 0)
 
 
-(defun draw-triangle (tri colors)
-  (declare (type shape-vector tri))
-  (declare (type shape-vector colors))
-  (gl:with-primitive :triangles
-    (let ((c (aref colors 0)))
-      (gl:color (aref c 0) (aref c 1) (aref c 2)))
-    (let ((v (aref tri 0)))
-      (gl:vertex (aref v 0) (aref v 1) (aref v 2)))
-    
-    (let ((c (aref colors 1)))
-      (gl:color (aref c 0) (aref c 1) (aref c 2)))
-    (let ((v (aref tri 1)))
-      (gl:vertex (aref v 0) (aref v 1) (aref v 2)))
-    
-    (let ((c (aref colors 2)))
-      (gl:color (aref c 0) (aref c 1) (aref c 2)))
-    (let ((v (aref tri 2)))
-      (gl:vertex (aref v 0) (aref v 1) (aref v 2)))))
 
-(defun draw-entity (entity)
-  (gl:translate (aref (coords (motion entity)) 0) (aref (coords (motion entity)) 1) (aref (coords (motion entity)) 2))
-  (gl:rotate (aref (angles entity) 0) 1 0 0)
-  (gl:rotate (aref (angles entity) 1) 0 1 0)
-  (gl:rotate (aref (angles entity) 2) 0 0 1)
-  (loop for i from 0 to (1- (length (faces (model entity)))) do
-       (draw-triangle (get-vertecies (aref (faces (model entity)) i) (vertices (model entity)))
-		      (get-vertecies (aref (face-colors (model entity)) i) (colors (model entity))))))
-
-(defgeneric object-draw (object))
-
-(defmethod object-draw :before ((object game-object))
-  (gl:push-matrix))
-
-(defmethod object-draw :after ((object game-object))
-  (gl:pop-matrix))
-
-(defmethod object-draw ((object game-object))
-  (draw-entity object))
 
 (defmethod object-draw ((object powered-object))
   (draw-entity object)

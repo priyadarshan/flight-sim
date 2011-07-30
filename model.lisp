@@ -6,6 +6,14 @@
    (colors :initarg :colors :reader colors :initform (vector) :type shape-vector)
    (face-colors :initarg :face-colors :accessor face-colors :initform (vector) :type shape-ref-vector)))
 
+(defmethod draw ((model model))
+  (loop for i from 0 to (1- (length (faces model))) do
+       (draw-triangle (get-vertecies (aref (faces model) i) (vertices model))
+		      (get-vertecies (aref (face-colors model) i) (colors model)))))
+
+(defclass animated-model ()
+  ((start-time :initarg :start-time :accessor start-time :initform 0.0)))
+
 (defmethod scale-colors ((model model))
   (let ((colors (colors model)))
     (loop for i from 0 to (1- (length colors)) do 

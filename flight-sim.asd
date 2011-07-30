@@ -8,7 +8,9 @@
   :components ((:file "package")
 	       (:file "util")
 	       (:file "math")
+	       (:file "graphics")
 	       (:file "model")
 	       (:file "phsyics")
+	       (:file "objects")
                (:file "flight-sim")))
 
