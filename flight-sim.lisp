@@ -6,67 +6,70 @@
 
 
 
-(defclass engine-object (game-object)
-  ((active :initarg :active :reader active :initform nil)
-   (start-time :initarg :start-time :reader start-time :initform nil)
-   (forces :initarg :forces :accessor forces :initform '())))
+;(defclass engine-object (game-object)
+;  ((active :initarg :active :reader active :initform nil)
+;   (start-time :initarg :start-time :reader start-time :initform nil)
+;   (forces :initarg :forces :accessor forces :initform '())))
 
-(defgeneric activate-engine (object engine-sym))
+;(defgeneric activate-engine (object engine-sym))
 
-(defmethod activate-engine ((object powered-object) engine-sym)
-  (push :engine-sym (getf (engines object) :active))
-  (engine-start (getf (getf (engines object) :engines) engine-sym) (wall-time)))
+;(defmethod activate-engine ((object powered-object) engine-sym)
+;  (push :engine-sym (getf (engines object) :active))
+;  (engine-start (getf (getf (engines object) :engines) engine-sym) (wall-time)))
 
-(defgeneric engine-start (engine time))
-(defmethod engine-start ((engine engine-object) time)
-  (setf (slot-value engine 'active) t)
-  (setf (slot-value engine 'start-time) time))
+;(defgeneric engine-start (engine time))
+;(defmethod engine-start ((engine engine-object) time)
+;  (setf (slot-value engine 'active) t)
+;  (setf (slot-value engine 'start-time) time))
 
-(defgeneric engine-stop (engine))
-(defmethod engine-stop ((engine engine-object))
-  (setf (slot-value engine 'active) nil))
+;(defgeneric engine-stop (engine))
+;(defmethod engine-stop ((engine engine-object))
+;  (setf (slot-value engine 'active) nil))
 
 
 ; take 2 seconds to fully fire
-(defmethod engine-genmodel ((engine engine-object))
-  (let ((time (- (wall-time) (start-time engine))))
-    (setf (model engine)
-	(make-model-3pyramid (make-2d-array 4 3 
-					    `((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
-					      ; z goes from 0 to 1 in 2 seconds
-					      (0.0 0.0 ,(converge 0 1 2 time))))
-			     :point-colors (make-2d-array 4 3 `(
-								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
-								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
-								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
-								(,(converge 0 255 2 time) ,(converge 0 255 2 time) ,(converge 64 255 2 time))))))))
+;(defmethod engine-genmodel ((engine engine-object))
+;  (let ((time (- (wall-time) (start-time engine))))
+;    (setf (model engine)
+;	(make-model-3pyramid (make-2d-array 4 3 
+;					    `((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
+;					      ; z goes from 0 to 1 in 2 seconds
+;					      (0.0 0.0 ,(converge 0 1 2 time))))
+;			     :point-colors (make-2d-array 4 3 `(
+;								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
+;								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
+;								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
+;								(,(converge 0 255 2 time) ,(converge 0 255 2 time) ,(converge 64 255 2 time))))))))
 
 
-(defclass powered-object (game-object)
-  ;; plist :: ( :objects (plist models) :active (list symbols))
-  ((engines :initarg :engines :accessor engines :initform '(:engines () :active ()))))
-;  ((engine :initarg :engine :accessor engine :initform nil)))
-
-
-   ;(attachments :initarg :attachments :accessor attachments :initform nil)))
-
-;; time is time elapsed in seconds (with decimal for sub seconds)
-(defmethod time-step ((engine engine) object time)
-  ; f = ma
-  (let ((accel (/ (force engine) (mass object)))) 
-  ; x = x +v*t + 1/2 * a * t^2
-  (dotimes (i 3) (progn
-		   (incf (aref (coords motion) i) 
-			 (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
-		   (incf (aref (velocity motion) i)
-			 (* time (aref (acceleration motion) i))))))
+;(defclass powered-object (game-object)
+;  ;; plist :: ( :objects (plist models) :active (list symbols))
+;  ((engines :initarg :engines :accessor engines :initform '(:engines () :active ()))))
+;;  ((engine :initarg :engine :accessor engine :initform nil)))
+;
+;
+;   ;(attachments :initarg :attachments :accessor attachments :initform nil)))
 
 
 
-(defmethod time-step ((object powered-object) time)  
-  (loop for engine in (loop for engine-sym in (getf (engines object) :active) collecting (getf (engines engines) engine-sym)) do
-       (time-step engine object time)))	 
- ; (motion-step (motion *self*) time))
+
+; time is time elapsed in seconds (with decimal for sub seconds)
+;(defmethod time-step ((engine engine) object time)
+;  ; f = ma
+;  (let ((accel (/ (force engine) (mass object)))) 
+;  ; x = x +v*t + 1/2 * a * t^2
+;  (dotimes (i 3) (progn
+;		   (incf (aref (coords motion) i) 
+;			 (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
+;		   (incf (aref (velocity motion) i)
+;			 (* time (aref (acceleration motion) i))))))
+
+
+
+;(defmethod time-step ((object powered-object) time)  
+;  (loop for engine in (loop for engine-sym in (getf (engines object) :active) collecting (getf (engines engines) engine-sym)) do
+;       (time-step engine object time)))	 
+; ; (motion-step (motion *self*) time))
 
 
 
@@ -81,7 +84,7 @@
 ;		 :colors (make-2d-array 2 3 '((196 196 196) (32 32 32)))
 ;		 :face-colors (make-2d-array 4 3 '((0 0 0) (0 0 0) (0 0 0) (1 1 1)))))
 
-
+ 
 (defparameter *world* nil)
 
 (defparameter *self* nil)
@@ -100,32 +103,34 @@
 
 
 
-(defmethod object-draw ((object powered-object))
-  (draw-entity object)
-  (if (eql (active (engine object)) t)
-      (progn
-	(setf (model (engine object)) (engine-genmodel (engine object)))
-	(gl:translate 0 0 0)
-	(object-draw (engine object)))))
+;(defmethod object-draw ((object powered-object))
+;  (draw-entity object)
+;  (if (eql (active (engine object)) t)
+;      (progn
+;	(setf (model (engine object)) (engine-genmodel (engine object)))
+;	(gl:translate 0 0 0)
+;	(object-draw (engine object)))))
  
 
-(defun draw ()
+(defun draw-world ()
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
-  (object-draw (make-instance 'powered-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model* :engine (engine *self*)))
-
-  (gl:translate  (- (aref (coords (motion *self*)) 0)) (- (aref (coords (motion *self*)) 1)) (- (aref (coords (motion *self*)) 2))) ;; eye    
-  
+  ;;(object-draw (make-instance 'powered-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model* :engine (engine *self*)))
+  (format t "draw self~%")
+  (draw *self*)
+  (format t "move to coords~%")
+  (gl:translate  (- (aref (coords (body *self*)) 0)) (- (aref (coords (body *self*)) 1)) (- (aref (coords (body *self*)) 2))) ;; eye    
+  (format t "draw all else~%")
   (loop for entity across *world* do
        ; only draw if its infront of me
-       (if (< (aref (coords (motion entity)) 2) (+ 10  (aref (coords (motion *self*)) 2)))
-	   (object-draw entity)))
-  
+       (if (< (aref (coords (body entity)) 2) (+ 10  (aref (coords (body *self*)) 2)))
+	   (draw entity)))
+  (format t "look at~%")
   (gl:matrix-mode :modelview)
   (gl:load-identity)
   
-   (glu:look-at 0 6 10 ;; pos
+  (glu:look-at 0 6 10 ;; pos
 		0 0 0 ;; center
 		0 1 0 ;; up in y pos
 		)
@@ -134,17 +139,17 @@
    (gl:flush)
    (sdl:update-display))
 
-(defun phys-step (time)
-  (time-step *self* time))
+;(defun phys-step (time)
+;  (time-step *self* time))
 
 
 (defun thruster-on (key)
   (case key 
-    ((:sdl-key-w) ; + z
-     (progn
+  ;  ((:sdl-key-w) ; + z
+   ;  (progn
        ;(setf (aref (acceleration (motion *self*)) 2) (- *acceleration*))
        ;(engine-start (engine *self*) (wall-time))))
-       (activate-engine *self* :thrust))) 
+ ;      (activate-engine *self* :thrust))) 
      
     ((:sdl-key-s) ; - z
      (setf (aref (acceleration (motion *self*)) 2) *acceleration*))
@@ -160,10 +165,10 @@
 
 (defun thruster-off (key)
   (case key 
-    ((:sdl-key-w) ; + z
-     (progn
-       (setf (aref (acceleration (motion *self*)) 2) 0)
-       (engine-stop (engine *self*))))
+    ;((:sdl-key-w) ; + z
+    ; (progn
+    ;   (setf (aref (acceleration (motion *self*)) 2) 0)
+    ;   (engine-stop (engine *self*))))
      
     ((:sdl-key-s) ; - z
      (setf (aref (acceleration (motion *self*)) 2) 0))
@@ -184,8 +189,8 @@
 	 (time (- start-time *last-time*)))
 	
 
-      (phys-step time)
-      (draw)
+     ; (phys-step time)
+      (draw-world)
       
 
       (incf *num-frames*)
@@ -228,9 +233,10 @@
 					:model (make-instance 'model
 							      :vertices (vertices *diamond-model*)
 							      :faces (faces *diamond-model*))
-					:angles (vector (random 360) (random 360) (random 360))
-					:motion (make-instance 'motion
-							       :coords (vector (- (random 75) 37) (- (random 75) 37) (- (random 200) ))))))
+					
+					:body (make-instance 'body
+							     :coords (vector (- (random 75) 37) (- (random 75) 37) (- (random 200) ))
+							     :angles (vector (random 360) (random 360) (random 360))))))
 			   (setf (colors (model e)) (make-2d-array 3 3 `((,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)))))
 			   (setf (face-colors (model e)) (make-2d-array 8 3 '((0 1 1) (0 1 1) (0 1 1) (0 1 1) (1 2 1) (1 2 1) (1 2 1) (1 2 1))))
 			   e)))))
@@ -240,13 +246,13 @@
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
   (setf *controls-active* '())
-  (setf *self* (make-instance 'powered-object 
-			      :motion (make-instance 'motion :coords (vector 0 0 11))
-			      :model *ship-model*
-			      :engines (list :engines (list :thrust 
-						       (make-instance 'engine-object 
-								      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))
-								      :forces (list (make-instance 'force :newtons 10 :direction '(0 0 1))))))))
+  (setf *self* (make-instance 'game-object 
+			      :body (make-instance 'body :coords (vector 0 0 11))
+			      :model *ship-model*))
+			      ;:engines (list :engines (list :thrust 
+				;		       (make-instance 'engine-object 
+				;				      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))
+				;				      :forces (list (make-instance 'force :newtons 10 :direction '(0 0 1))))))))
 					     
   (populate-world)
 )

@@ -14,6 +14,8 @@
 (defclass animated-model ()
   ((start-time :initarg :start-time :accessor start-time :initform 0.0)))
 
+(defgeneric scale-colors (model))
+
 (defmethod scale-colors ((model model))
   (let ((colors (colors model)))
     (loop for i from 0 to (1- (length colors)) do 

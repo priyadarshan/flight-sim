@@ -9,14 +9,16 @@
    (active-attachments :initarg :active-attachments :accessor active-attachments :initform '())))
 
 
-
+;(defmethod coords ((object game-object))
+;  (coords (body object)))
+		   
 
 (defmethod draw :before ((object game-object))
   (gl:push-matrix)
-  (gl:translate (aref (coords (motion entity)) 0) (aref (coords (motion entity)) 1) (aref (coords (motion entity)) 2))
-  (gl:rotate (aref (angles entity) 0) 1 0 0)
-  (gl:rotate (aref (angles entity) 1) 0 1 0)
-  (gl:rotate (aref (angles entity) 2) 0 0 1))
+  (gl:translate (aref (coords (body object)) 0) (aref (coords (body object)) 1) (aref (coords (body object)) 2))
+  (gl:rotate (aref (angles (body object)) 0) 1 0 0)
+  (gl:rotate (aref (angles (body object)) 1) 0 1 0)
+  (gl:rotate (aref (angles (body object)) 2) 0 0 1))
 
 (defmethod draw :after ((object game-object))
   (gl:pop-matrix))
