@@ -10,7 +10,7 @@
 	       (:file "math")
 	       (:file "graphics")
 	       (:file "model")
-	       (:file "phsyics")
+	       (:file "physics")
 	       (:file "objects")
                (:file "flight-sim")))
 
