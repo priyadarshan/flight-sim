@@ -112,14 +112,14 @@
 ;	(object-draw (engine object)))))
  
 
-(defun draw-world ()
+(defun draw-world (time)
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
   ;;draw (make-instance 'powered-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model* :engine (engine *self*)))
   (let ((orig-coords (coords (body *self*))))
     (setf (coords (body *self*)) (vector 0 0 -3))
-    (draw *self*)
+    (draw *self* time)
     (setf (coords (body *self*)) orig-coords))
   
   (gl:translate  (- (aref (coords (body *self*)) 0)) (- (aref (coords (body *self*)) 1)) (- (aref (coords (body *self*)) 2))) ;; eye    
@@ -127,7 +127,7 @@
   (loop for entity across *world* do
        ; only draw if its infront of me
        (if (< (aref (coords (body entity)) 2) (+ 10  (aref (coords (body *self*)) 2)))
-	   (draw entity)))
+	   (draw entity time)))
   
   (gl:matrix-mode :modelview)
   (gl:load-identity)
@@ -192,7 +192,7 @@
 	
 
      ; (phys-step time)
-      (draw-world)
+      (draw-world start-time)
       
 
       (incf *num-frames*)

@@ -6,7 +6,7 @@
    (colors :initarg :colors :reader colors :initform (vector) :type shape-vector)
    (face-colors :initarg :face-colors :accessor face-colors :initform (vector) :type shape-ref-vector)))
 
-(defmethod draw ((model model))
+(defmethod draw ((model model) time)
   (loop for i from 0 to (1- (length (faces model))) do
        (draw-triangle (get-vertecies (aref (faces model) i) (vertices model))
 		      (get-vertecies (aref (face-colors model) i) (colors model)))))

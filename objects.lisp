@@ -11,17 +11,20 @@
 
 ;(defmethod coords ((object game-object))
 ;  (coords (body object)))
-		   
 
-(defmethod draw :before ((object game-object))
+(defmethod activate ((object game-object) sym start-time)
+  (push sym (active-attachments object))
+  (activate (getf (attachments object) sym)))
+
+(defmethod draw :before ((object game-object) time)
   (gl:push-matrix)
   (gl:translate (aref (coords (body object)) 0) (aref (coords (body object)) 1) (aref (coords (body object)) 2))
   (gl:rotate (aref (angles (body object)) 0) 1 0 0)
   (gl:rotate (aref (angles (body object)) 1) 0 1 0)
   (gl:rotate (aref (angles (body object)) 2) 0 0 1))
 
-(defmethod draw :after ((object game-object))
+(defmethod draw :after ((object game-object) time)
   (gl:pop-matrix))
 
-(defmethod draw ((object game-object))
-  (draw (model object)))
+(defmethod draw ((object game-object) time)
+  (draw (model object) time))

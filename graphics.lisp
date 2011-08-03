@@ -22,4 +22,4 @@
 ;(defun draw-entity (entity)
   
 
-(defgeneric draw (object))
+(defgeneric draw (object time))
