@@ -248,9 +248,21 @@
   (setf *num-frames* 0)
   (setf *last-time* *start-time*)
   (setf *controls-active* '())
-  (setf *self* (make-instance 'game-object 
-			      :body (make-instance 'body :coords (vector 0 0 11))
-			      :model *ship-model*))
+  (setf *self* 
+	(make-instance 
+	 'game-object 
+	 :body (make-instance 'body :coords (vector 0 0 11))
+	 :model *ship-model*
+	 :attachments 
+	 (list :thruster
+	       (make-instance 'engine-object
+			      :model (make-instance 'engine-model 
+						    :template-vertices *thruster-vertices*
+						    :template-colors *thruster-colors*)
+			      :body (make-instance 'body
+						   :coords (vector 0 0 3)))))))
+	
+  
 			      ;:engines (list :engines (list :thrust 
 				;		       (make-instance 'engine-object 
 				;				      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))

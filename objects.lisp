@@ -14,7 +14,7 @@
 
 (defmethod activate ((object game-object) sym start-time)
   (push sym (active-attachments object))
-  (activate (getf (attachments object) sym)))
+  (activate (getf (attachments object) sym) start-time))
 
 (defmethod draw :before ((object game-object) time)
   (gl:push-matrix)

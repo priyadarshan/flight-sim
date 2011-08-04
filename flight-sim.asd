@@ -12,5 +12,6 @@
 	       (:file "model")
 	       (:file "physics")
 	       (:file "objects")
+	       (:file "engine")
                (:file "flight-sim")))
 

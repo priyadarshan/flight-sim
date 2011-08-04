@@ -22,8 +22,8 @@
 
 ; take 2 seconds to fully fire
 (defmethod regen-model ((model engine-model) time)
-  (setf (vertices model) (generate-step-2d-array *thruster-vertices* time))
-  (setf (colors model) (generate-step-2d-array *thruster-colors* time)))
+  (setf (vertices model) (generate-step-2d-array (template-vertices model) time))
+  (setf (colors model) (generate-step-2d-array (template-colors model) time)))
 
 
 (defparameter *thruster-vertices* 
