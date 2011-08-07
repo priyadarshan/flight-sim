@@ -13,6 +13,7 @@
   ((template-vertices :initarg :template-vertices :accessor template-vertices :initform nil)
    (template-colors :initarg :template-colors :accessor template-colors :initform nil)))
 
+
 (defun generate-step-2d-array (2darr time)
   (let ((len-arr (length 2darr))
 	(len-row (length (first 2darr))))
@@ -26,7 +27,6 @@
 
 ; take 2 seconds to fully fire
 (defmethod regen-model ((model engine-model) time)
-  (format t "REGNE MODEL~%")
   (setf (vertices model) (generate-step-2d-array (template-vertices model) time))
   (setf (colors model) (generate-step-2d-array (template-colors model) time)))
 
@@ -44,8 +44,8 @@
 
 
 (defmethod draw ((object engine-object) time) 
-  (if (< (- time (start-time object)) (activation-time object))
-      (regen-model (model object) time))
+  (if (< (- time (start-time object)) (activation-time object)) ;; hack since times are in templates!!!
+      (regen-model (model object) (- time (start-time object))))
   (call-next-method))
 	    
       

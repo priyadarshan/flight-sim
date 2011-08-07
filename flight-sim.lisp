@@ -112,14 +112,14 @@
 ;	(object-draw (engine object)))))
  
 
-(defun draw-world (time)
+(defun draw-world (start-time)
   ;; clear the buffer
   (gl:clear :color-buffer-bit :depth-buffer-bit)      
   ;; move to eye position
   ;;draw (make-instance 'powered-object :motion (make-instance 'motion :coords (vector 0 0 -3)) :model *ship-model* :engine (engine *self*)))
   (let ((orig-coords (coords (body *self*))))
     (setf (coords (body *self*)) (vector 0 0 -3))
-    (draw *self* time)
+    (draw *self* start-time)
     (setf (coords (body *self*)) orig-coords))
   
   (gl:translate  (- (aref (coords (body *self*)) 0)) (- (aref (coords (body *self*)) 1)) (- (aref (coords (body *self*)) 2))) ;; eye    
@@ -127,12 +127,12 @@
   (loop for entity across *world* do
        ; only draw if its infront of me
        (if (< (aref (coords (body entity)) 2) (+ 10  (aref (coords (body *self*)) 2)))
-	   (draw entity time)))
+	   (draw entity start-time)))
   
   (gl:matrix-mode :modelview)
   (gl:load-identity)
   
-  (glu:look-at 0 6 10 ;; pos
+  (glu:look-at 0 6 10  ;; 0 6 10 pos
 		0 0 0 ;; center
 		0 1 0 ;; up in y pos
 		)
@@ -198,13 +198,13 @@
       
 
       (incf *num-frames*)
-      (if (not (eql (floor *last-time*) (floor time)))
-	  (let* ((short-interval time)
-		 (long-interval (- start-time *start-time*) )
-		 (short-fps (floor (if (zerop short-interval) 0 (/ 1 short-interval))))
-		 (long-fps (floor (if (zerop long-interval) 0  (/ *num-frames* long-interval)))))
+ ;     (if (not (eql (floor *last-time*) (floor time)))
+;	  (let* ((short-interval time)
+;		 (long-interval (- start-time *start-time*) )
+;		 (short-fps (floor (if (zerop short-interval) 0 (/ 1 short-interval))))
+;		 (long-fps (floor (if (zerop long-interval) 0  (/ *num-frames* long-interval)))))
 	    
-	    (format t "FPS since last:~a since start:~a (~a frames in ~a seconds)~%" short-fps long-fps *num-frames* long-interval)))
+;	    (format t "FPS since last:~a since start:~a (~a frames in ~a seconds)~%" short-fps long-fps *num-frames* long-interval)))
   
       (setf *last-time* start-time)))
 
@@ -261,9 +261,12 @@
 			      :activation-time 2
 			      :model (make-instance 'engine-model 
 						    :template-vertices *thruster-vertices*
-						    :template-colors *thruster-colors*)
+						    :template-colors *thruster-colors*
+						    :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
+						    :face-colors (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))
+			      
 			      :body (make-instance 'body
-						   :coords (vector 0 0 3))))))
+						   :coords (vector 0 0.5 3))))))
 			      ;:engines (list :engines (list :thrust 
 				;		       (make-instance 'engine-object 
 				;				      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))
