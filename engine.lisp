@@ -2,8 +2,12 @@
 
 (defclass engine-object (game-object)
  ((start-time :initarg :start-time :accessor start-time :initform 0)
+  ;; time till fully active
   (activation-time :initarg :activation-time :accessor activation-time :initform 0)))
 
+
+(defmethod activate ((object engine-object) start-time)
+  (setf (start-time object) start-time))
 
 (defclass engine-model (model)
   ((template-vertices :initarg :template-vertices :accessor template-vertices :initform nil)
@@ -11,17 +15,18 @@
 
 (defun generate-step-2d-array (2darr time)
   (let ((len-arr (length 2darr))
-	(len-row (length (aref 2darr 0))))
+	(len-row (length (first 2darr))))
     (make-2d-array len-arr len-row
-		   (loop for i from 0 to len-arr collecting 
-			(loop for j from 0 to len-row collecting
-			     (let ((item (aref (aref 2darr i) j)))
-			       (if (listp item)
-				   (converge (first item) (second item) (third item) time)
-				   item)))))))
+		   (loop for row in 2darr collecting 
+			(loop for item in row collecting
+			     ;(let ((item (aref (aref 2darr i) j)))
+			     (if (listp item)
+				 (converge (first item) (second item) (third item) time)
+				 item))))))
 
 ; take 2 seconds to fully fire
 (defmethod regen-model ((model engine-model) time)
+  (format t "REGNE MODEL~%")
   (setf (vertices model) (generate-step-2d-array (template-vertices model) time))
   (setf (colors model) (generate-step-2d-array (template-colors model) time)))
 
@@ -38,9 +43,9 @@
     ((0 255 2) (0 255 2) (64 255 2))))
 
 
-(defmethod draw ((model engine-model) time) 
-  (if (and (generated-model model) (< (- time (start-time model)) (activation-time model)))
-      (regen-model model time))
+(defmethod draw ((object engine-object) time) 
+  (if (< (- time (start-time object)) (activation-time object))
+      (regen-model (model object) time))
   (call-next-method))
 	    
       

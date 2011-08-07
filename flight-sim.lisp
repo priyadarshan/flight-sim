@@ -147,7 +147,8 @@
 
 (defun thruster-on (key)
   (case key 
-  ;  ((:sdl-key-w) ; + z
+    ((:sdl-key-w) ; + z
+     (activate-attachment *self* :thruster (wall-time)))
    ;  (progn
        ;(setf (aref (acceleration (motion *self*)) 2) (- *acceleration*))
        ;(engine-start (engine *self*) (wall-time))))
@@ -167,7 +168,8 @@
 
 (defun thruster-off (key)
   (case key 
-    ;((:sdl-key-w) ; + z
+    ((:sdl-key-w) ; + z
+     (deactivate-attachment *self* :thruster))
     ; (progn
     ;   (setf (aref (acceleration (motion *self*)) 2) 0)
     ;   (engine-stop (engine *self*))))
@@ -256,13 +258,12 @@
 	 :attachments 
 	 (list :thruster
 	       (make-instance 'engine-object
+			      :activation-time 2
 			      :model (make-instance 'engine-model 
 						    :template-vertices *thruster-vertices*
 						    :template-colors *thruster-colors*)
 			      :body (make-instance 'body
-						   :coords (vector 0 0 3)))))))
-	
-  
+						   :coords (vector 0 0 3))))))
 			      ;:engines (list :engines (list :thrust 
 				;		       (make-instance 'engine-object 
 				;				      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))

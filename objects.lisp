@@ -12,9 +12,18 @@
 ;(defmethod coords ((object game-object))
 ;  (coords (body object)))
 
-(defmethod activate ((object game-object) sym start-time)
+(defgeneric activate (object start-time))
+(defgeneric activate-attachment (object sym start-time))
+
+(defgeneric deactivate (object))
+(defgeneric deactivate-attachment (object sym))
+
+(defmethod activate-attachment ((object game-object) sym start-time)
   (push sym (active-attachments object))
   (activate (getf (attachments object) sym) start-time))
+
+(defmethod deactivate-attachment ((object game-object) sym)
+  (setf (active-attachments object) (remove sym (active-attachments object))))
 
 (defmethod draw :before ((object game-object) time)
   (gl:push-matrix)
@@ -27,4 +36,6 @@
   (gl:pop-matrix))
 
 (defmethod draw ((object game-object) time)
-  (draw (model object) time))
+  (draw (model object) time)
+  (loop for a in (active-attachments object) do
+       (draw (getf (attachments object) a) time)))
