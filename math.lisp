@@ -53,3 +53,27 @@
 (defun rotate-triangle (tri m)
   (make-array (length tri) :initial-contents
 	      (loop for v across tri collecting (rotate* m v))))
+
+(defun scale-vector (v a)
+  (make-array (length v) :initial-contents (loop for i across v collecting (* i a))))
+
+; returns a vector with all elemts scaled to biggest 1 which is scaled to 1
+; e.x. (scale-vector (8 4 2)) -> (1 .5 .25)
+(defun scale-vector-1 (v)
+  (let ((max (loop for i across v maximize i into result finally (return result))))
+    (make-array (length v) :initial-contents (loop for i across v collecting (float (/ i max))))))
+
+(defun dot (v1 v2)
+  (loop for i from 0 to (1- (length v1)) summing (* (aref v1 i) (aref v2 i))))
+
+(defun vector-length (v)
+  (sqrt (dot v v)))
+
+(defun scalar-proj (vector direction)
+  (let ((length (vector-length direction)))
+    (if (eql 0 length)
+	0
+	(/ (dot vector direction) length))))
+
+(defun vector- (v1 v2)
+  (make-array (length v1) :initial-contents (loop for i from 0 to (1- (length v1)) collecting (- (aref v1 i) (aref v2 i)))))

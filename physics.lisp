@@ -16,3 +16,4 @@
 (defclass force ()
   ((newtons :initarg :newtons :accessor newtons :initform 0)
    (direction :initarg :direction :accessor direction :initform (vector))))
+

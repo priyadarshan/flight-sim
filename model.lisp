@@ -65,6 +65,6 @@
 				  (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))))
 	 
 (defparameter *ship-model*
-  (make-model-3pyramid (make-2d-array 4 3 '((0.0 0.0 0.0) (0.0 1.0 3.0) (-2.0 0.0 3.0) (2.0 0.0 3.0)))
+  (make-model-3pyramid (make-2d-array 4 3 '((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5)))
 		       :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
 

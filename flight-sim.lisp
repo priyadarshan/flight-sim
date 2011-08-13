@@ -5,67 +5,6 @@
 ;;; "flight-sim" goes here. Hacks and glory await!
 
 
-
-;(defclass engine-object (game-object)
-;  ((active :initarg :active :reader active :initform nil)
-;   (start-time :initarg :start-time :reader start-time :initform nil)
-;   (forces :initarg :forces :accessor forces :initform '())))
-
-;(defgeneric activate-engine (object engine-sym))
-
-;(defmethod activate-engine ((object powered-object) engine-sym)
-;  (push :engine-sym (getf (engines object) :active))
-;  (engine-start (getf (getf (engines object) :engines) engine-sym) (wall-time)))
-
-;(defgeneric engine-start (engine time))
-;(defmethod engine-start ((engine engine-object) time)
-;  (setf (slot-value engine 'active) t)
-;  (setf (slot-value engine 'start-time) time))
-
-;(defgeneric engine-stop (engine))
-;(defmethod engine-stop ((engine engine-object))
-;  (setf (slot-value engine 'active) nil))
-
-
-; take 2 seconds to fully fire
-;(defmethod engine-genmodel ((engine engine-object))
-;  (let ((time (- (wall-time) (start-time engine))))
-;    (setf (model engine)
-;	(make-model-3pyramid (make-2d-array 4 3 
-;					    `((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
-;					      ; z goes from 0 to 1 in 2 seconds
-;					      (0.0 0.0 ,(converge 0 1 2 time))))
-;			     :point-colors (make-2d-array 4 3 `(
-;								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
-;								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
-;								(,(converge 16 64 2 time) ,(converge 0 132 2 time) ,(converge 32 164 2 time))
-;								(,(converge 0 255 2 time) ,(converge 0 255 2 time) ,(converge 64 255 2 time))))))))
-
-
-;(defclass powered-object (game-object)
-;  ;; plist :: ( :objects (plist models) :active (list symbols))
-;  ((engines :initarg :engines :accessor engines :initform '(:engines () :active ()))))
-;;  ((engine :initarg :engine :accessor engine :initform nil)))
-;
-;
-;   ;(attachments :initarg :attachments :accessor attachments :initform nil)))
-
-
-
-
-; time is time elapsed in seconds (with decimal for sub seconds)
-;(defmethod time-step ((engine engine) object time)
-;  ; f = ma
-;  (let ((accel (/ (force engine) (mass object)))) 
-;  ; x = x +v*t + 1/2 * a * t^2
-;  (dotimes (i 3) (progn
-;		   (incf (aref (coords motion) i) 
-;			 (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
-;		   (incf (aref (velocity motion) i)
-;			 (* time (aref (acceleration motion) i))))))
-
-
-
 ;(defmethod time-step ((object powered-object) time)  
 ;  (loop for engine in (loop for engine-sym in (getf (engines object) :active) collecting (getf (engines engines) engine-sym)) do
 ;       (time-step engine object time)))	 
@@ -73,18 +12,6 @@
 
 
 
-
-
-;(defclass engine () 
-;  (
-
-;  (make-instance 'model
-;		 :vertices (make-2d-array 4 3 '((0 0 0) (0 1 3) (-2 0 3) (2 0 3)))
-;		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
-;		 :colors (make-2d-array 2 3 '((196 196 196) (32 32 32)))
-;		 :face-colors (make-2d-array 4 3 '((0 0 0) (0 0 0) (0 0 0) (1 1 1)))))
-
- 
 (defparameter *world* nil)
 
 (defparameter *self* nil)
@@ -100,17 +27,6 @@
 (defparameter *last-time* nil)
 (defparameter *num-frames* 0)
 
-
-
-
-;(defmethod object-draw ((object powered-object))
-;  (draw-entity object)
-;  (if (eql (active (engine object)) t)
-;      (progn
-;	(setf (model (engine object)) (engine-genmodel (engine object)))
-;	(gl:translate 0 0 0)
-;	(object-draw (engine object)))))
- 
 
 (defun draw-world (start-time)
   ;; clear the buffer
@@ -186,6 +102,10 @@
      (setf (aref (acceleration (motion *self*)) 1) 0))
     (otherwise (format t "~a~%" key))))
 
+(defun phys-step (time)
+  (loop for sym in (active-attachments *self*) do
+       (phys-act (getf (attachments *self*) sym) *self*  time)))
+
 
 (defun sim-step ()
   "draw a frame"
@@ -193,7 +113,7 @@
 	 (time (- start-time *last-time*)))
 	
 
-     ; (phys-step time)
+      (phys-step time)
       (draw-world start-time)
       
 
@@ -264,9 +184,10 @@
 						    :template-colors *thruster-colors*
 						    :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
 						    :face-colors (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))
+			      :force (make-instance 'force :newtons 10 :direction (vector 0 0 1))
 			      
 			      :body (make-instance 'body
-						   :coords (vector 0 0.5 3))))))
+						   :coords (vector 0 0.5 1.5))))))
 			      ;:engines (list :engines (list :thrust 
 				;		       (make-instance 'engine-object 
 				;				      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))

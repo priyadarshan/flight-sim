@@ -3,7 +3,8 @@
 (defclass engine-object (game-object)
  ((start-time :initarg :start-time :accessor start-time :initform 0)
   ;; time till fully active
-  (activation-time :initarg :activation-time :accessor activation-time :initform 0)))
+  (activation-time :initarg :activation-time :accessor activation-time :initform 0)
+  (force :initarg :force :accessor force :initform (make-instance 'force))))
 
 
 (defmethod activate ((object engine-object) start-time)
@@ -37,9 +38,9 @@
     (0.0 0.0 (0 1 2))))
 
 (defparameter *thruster-colors*
-  '(((16 64 2) (0 132 2) (32 164 2))
-    ((16 64 2) (0 132 2) (32 164 2))
-    ((16 64 2) (0 132 2) (32 164 2))
+  '(((32 64 2) (32 132 2) (32 164 2))
+    ((32 64 2) (32 132 2) (32 164 2))
+    ((32 64 2) (32 132 2) (32 164 2))
     ((0 255 2) (0 255 2) (64 255 2))))
 
 
@@ -49,3 +50,24 @@
   (call-next-method))
 	    
       
+(defmethod phys-act ((src engine-object) (target game-object) time)
+  (let* ((scalar-proj (scalar-proj (vector-scale-1 (direction (force (src)))) (vector-scale-1 (position src))))
+	 (accel (/ (newtons (force src)) (mass (body target))))
+	 (accel-vec (scale-vector scalar-proj accel)))
+    
+
+
+; time is time elapsed in seconds (with decimal for sub seconds)
+;(defmethod time-step ((engine engine) object time)
+;  ; f = ma
+;  (let ((accel (/ (force engine) (mass object)))) 
+;  ; x = x +v*t + 1/2 * a * t^2
+;  (dotimes (i 3) (progn
+;                  (incf (aref (coords motion) i) 
+;                        (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
+;                  (incf (aref (velocity motion) i)
+;                        (* time (aref (acceleration motion) i))))))
+
+    
+    
+

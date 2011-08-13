@@ -39,3 +39,6 @@
   (draw (model object) time)
   (loop for a in (active-attachments object) do
        (draw (getf (attachments object) a) time)))
+
+
+(defgeneric phys-act (src target time))
