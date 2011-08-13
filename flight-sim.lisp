@@ -103,8 +103,10 @@
     (otherwise (format t "~a~%" key))))
 
 (defun phys-step (time)
-  (loop for sym in (active-attachments *self*) do
-       (phys-act (getf (attachments *self*) sym) *self*  time)))
+  (let ((accel (vector 0 0 0)))
+    (loop for sym in (active-attachments *self*) do
+	 (setf accel (vector+ accel (get-accel (getf (attachments *self*) sym) *self*))))
+    (apply-accel *self* accel time)))
 
 
 (defun sim-step ()

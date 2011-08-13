@@ -50,24 +50,12 @@
   (call-next-method))
 	    
       
-(defmethod phys-act ((src engine-object) (target game-object) time)
-  (let* ((scalar-proj (scalar-proj (vector-scale-1 (direction (force (src)))) (vector-scale-1 (position src))))
+(defmethod get-accel ((src engine-object) (target game-object))
+  (let* ((scalar-proj (scalar-proj (scale-vector-1 (direction (force (body src)))) (scale-vector-1 (coords (body src)))))
 	 (accel (/ (newtons (force src)) (mass (body target))))
 	 (accel-vec (scale-vector scalar-proj accel)))
+    accel-vec))
     
-
-
-; time is time elapsed in seconds (with decimal for sub seconds)
-;(defmethod time-step ((engine engine) object time)
-;  ; f = ma
-;  (let ((accel (/ (force engine) (mass object)))) 
-;  ; x = x +v*t + 1/2 * a * t^2
-;  (dotimes (i 3) (progn
-;                  (incf (aref (coords motion) i) 
-;                        (+ (* (aref (velocity motion) i) time) (* .5 (aref (acceleration motion) i) (expt time 2))))
-;                  (incf (aref (velocity motion) i)
-;                        (* time (aref (acceleration motion) i))))))
-
     
     
 

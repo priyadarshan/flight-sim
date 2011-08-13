@@ -40,5 +40,17 @@
   (loop for a in (active-attachments object) do
        (draw (getf (attachments object) a) time)))
 
+;; get the vector of accel src object exerts on target object
+(defgeneric get-accel (src target))
 
-(defgeneric phys-act (src target time))
+(defgeneric apply-accel (object accel time))
+
+; time is time elapsed in seconds (with decimal for sub seconds)
+(defmethod apply-accel ((object game-object) accel time)
+  ; x = x +v*t + 1/2 * a * t^2
+  (dotimes (i 3) (progn
+                  (incf (aref (coords (body object)) i) 
+                        (+ (* (aref (velocity (body object)) i) time) (* .5 (aref accel i) (expt time 2))))
+                  (incf (aref (velocity (body object)) i)
+                        (* time (aref accel i))))))
+
