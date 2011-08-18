@@ -51,7 +51,7 @@
 	    
       
 (defmethod get-accel ((src engine-object) (target game-object))
-  (let* ((scalar-proj (scalar-proj (scale-vector-1 (direction (force (body src)))) (scale-vector-1 (coords (body src)))))
+  (let* ((scalar-proj (scalar-proj (scale-vector-1 (direction (force src))) (scale-vector-1 (coords (body src)))))
 	 (accel (/ (newtons (force src)) (mass (body target))))
 	 (accel-vec (scale-vector scalar-proj accel)))
     accel-vec))
