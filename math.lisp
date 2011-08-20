@@ -17,7 +17,9 @@
 
 ;; function to determine value lying on start to end taking time duration at now
 (defun converge (start end duration now)
-  (float (+ start (* (- end start) (if (eql now 0.0) 0.0 (/ (min now duration) duration))))))
+  (if (> now duration) 
+      end
+      (float (+ start (* (- end start) (if (eql now 0.0) 0.0 (/ (min now duration) duration)))))))
 
 
 ;; returns a real lisp 2d array

@@ -43,6 +43,9 @@
     ((32 64 2) (32 132 2) (32 164 2))
     ((0 255 2) (0 255 2) (64 255 2))))
 
+;; jet shooting up
+(defparameter *jet-vertices* 
+  '((0 0 -0.2) (-0.2 0 0.2) (0.2 0 0.2) (0 (0 0.4 1) 0)))
 
 (defmethod draw ((object engine-object) time) 
   (if (< (- time (start-time object)) (activation-time object)) ;; hack since times are in templates!!!
