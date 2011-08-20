@@ -50,7 +50,7 @@
   ; x = x +v*t + 1/2 * a * t^2
   (dotimes (i 3) (progn
                   (incf (aref (coords (body object)) i) 
-                        (+ (* (aref (velocity (body object)) i) time) (* .5 (aref accel i) (expt time 2))))
-                  (incf (aref (velocity (body object)) i)
+                        (+ (* (aref (velocity (motion (body object))) i) time) (* .5 (aref accel i) (expt time 2))))
+                  (incf (aref (velocity (motion (body object))) i)
                         (* time (aref accel i))))))
 

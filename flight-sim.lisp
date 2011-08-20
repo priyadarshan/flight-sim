@@ -175,7 +175,7 @@
   (setf *self* 
 	(make-instance 
 	 'game-object 
-	 :body (make-instance 'body :coords (vector 0 0 11))
+	 :body (make-instance 'body :coords (vector 0 0 11) :mass 1000)
 	 :model *ship-model*
 	 :attachments 
 	 (list :thruster
@@ -186,10 +186,10 @@
 						    :template-colors *thruster-colors*
 						    :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
 						    :face-colors (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))
-			      :force (make-instance 'force :newtons 10 :direction (vector 0 0 1))
+			      :force (make-instance 'force :newtons 10000 :direction (vector 0 0 1))
 			      
 			      :body (make-instance 'body
-						   :coords (vector 0 0.5 1.5))))))
+						   :coords (vector 0 0 1.5))))))
 			      ;:engines (list :engines (list :thrust 
 				;		       (make-instance 'engine-object 
 				;				      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))

@@ -60,7 +60,7 @@
 ; returns a vector with all elemts scaled to biggest 1 which is scaled to 1
 ; e.x. (scale-vector (8 4 2)) -> (1 .5 .25)
 (defun scale-vector-1 (v)
-  (let ((max (loop for i across v maximize i into result finally (return result))))
+  (let ((max (loop for i across v maximize (abs i) into result finally (return result))))
     (make-array (length v) :initial-contents (loop for i across v collecting (float (/ i max))))))
 
 (defun dot (v1 v2)
@@ -77,3 +77,6 @@
 
 (defun vector- (v1 v2)
   (make-array (length v1) :initial-contents (loop for i from 0 to (1- (length v1)) collecting (- (aref v1 i) (aref v2 i)))))
+
+(defun vector+ (v1 v2)
+  (make-array (length v1) :initial-contents (loop for i from 0 to (1- (length v1)) collecting (+ (aref v1 i) (aref v2 i)))))

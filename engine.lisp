@@ -35,7 +35,7 @@
 (defparameter *thruster-vertices* 
   '((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
     ; z goes from 0 to 1 in 2 seconds
-    (0.0 0.0 (0 1 2))))
+    (0.0 0.0 (0 1.5 2))))
 
 (defparameter *thruster-colors*
   '(((32 64 2) (32 132 2) (32 164 2))
@@ -51,9 +51,9 @@
 	    
       
 (defmethod get-accel ((src engine-object) (target game-object))
-  (let* ((scalar-proj (scalar-proj (scale-vector-1 (direction (force src))) (scale-vector-1 (coords (body src)))))
-	 (accel (/ (newtons (force src)) (mass (body target))))
-	 (accel-vec (scale-vector scalar-proj accel)))
+  (let* ((force-used (scalar-proj (scale-vector-1 (direction (force src))) (scale-vector-1 (coords (body src)))))
+	 (accel (/ (* (newtons (force src)) force-used) (mass (body target))))
+	 (accel-vec (scale-vector (scale-vector-1 (direction (force src))) (- accel))))
     accel-vec))
     
     
