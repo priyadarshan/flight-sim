@@ -191,24 +191,23 @@
 			      :body (make-instance 'body
 						   :coords (vector 0 0 1.5)))
 	       ; yaw (starboard (right) positive)
-	       :pos-yaw 
-	       (make-instance 'engine-object
-			      :activation-time 2
-			      :model (make-instance 'engine-model
-						    :template-vertices *jet-vertices*
-						    :template-colors *thruster-colors*
-						    :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
-						    :face-colors (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))
-			      :body (make-instance 'body
-						   :coords (vector 
+;	       :pos-yaw 
+;	       (make-instance 'engine-object
+;			      :activation-time 2
+;			      :model (make-instance 'engine-model
+;						    :template-vertices *jet-vertices*
+;						    :template-colors *thruster-colors*
+;						    :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
+;						    :face-colors (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))
+;			      :body (make-instance 'body
+;						   :coords (vector 
 )))
 			      ;:engines (list :engines (list :thrust 
 				;		       (make-instance 'engine-object 
 				;				      :motion (make-instance 'motion :coords (vector 0 0.5 3.0))
 				;				      :forces (list (make-instance 'force :newtons 10 :direction '(0 0 1))))))))
 					     
-  (populate-world)
-)
+  (populate-world))
 
 (defun main-loop () 
   (init)
