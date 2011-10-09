@@ -153,15 +153,15 @@
 
 (defun populate-world ()
   (setf *world* 
-	(make-array 101 :initial-contents
-		    (loop for i from 0 to 100 collecting
+	(make-array 201 :initial-contents
+		    (loop for i from 0 to 200 collecting
 			 (let ((e (make-instance 'game-object 
 					:model (make-instance 'model
 							      :vertices (vertices *diamond-model*)
 							      :faces (faces *diamond-model*))
 					
 					:body (make-instance 'body
-							     :coords (vector (- (random 75) 37) (- (random 75) 37) (- (random 200) ))
+							     :coords (vector (- (random 75) 37) (- (random 75) 37) (- (random 400) ))
 							     :angles (vector (random 360) (random 360) (random 360))))))
 			   (setf (colors (model e)) (make-2d-array 3 3 `((,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)) (,(random 255) ,(random 255) ,(random 255)))))
 			   (setf (face-colors (model e)) (make-2d-array 8 3 '((0 1 1) (0 1 1) (0 1 1) (0 1 1) (1 2 1) (1 2 1) (1 2 1) (1 2 1))))
