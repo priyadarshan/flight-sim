@@ -70,16 +70,16 @@
        ;(engine-start (engine *self*) (wall-time))))
  ;      (activate-engine *self* :thrust))) 
      
-    ((:sdl-key-s) ; - z
-     (setf (aref (acceleration (motion *self*)) 2) *acceleration*))
-    ((:sdl-key-q) ; + x
-     (setf (aref (acceleration (motion *self*)) 0) *acceleration*))
-    ((:sdl-key-a) ; - x
-     (setf (aref (acceleration (motion *self*)) 0) (- *acceleration*)))
-    ((:sdl-key-e) ; + y
-     (setf (aref (acceleration (motion *self*)) 1) *acceleration*))
-    ((:sdl-key-d) ; - y
-     (setf (aref (acceleration (motion *self*)) 1) (- *acceleration*)))
+   ; ((:sdl-key-s) ; - z
+   ;  (setf (aref (acceleration (motion *self*)) 2) *acceleration*))
+   ; ((:sdl-key-q) ; + x
+   ;  (setf (aref (acceleration (motion *self*)) 0) *acceleration*))
+   ; ((:sdl-key-a) ; - x
+   ;  (setf (aref (acceleration (motion *self*)) 0) (- *acceleration*)))
+   ; ((:sdl-key-e) ; + y
+   ;  (setf (aref (acceleration (motion *self*)) 1) *acceleration*))
+   ; ((:sdl-key-d) ; - y
+   ;  (setf (aref (acceleration (motion *self*)) 1) (- *acceleration*)))
     (otherwise (format t "~a~%" key))))
 
 (defun thruster-off (key)
@@ -90,16 +90,16 @@
     ;   (setf (aref (acceleration (motion *self*)) 2) 0)
     ;   (engine-stop (engine *self*))))
      
-    ((:sdl-key-s) ; - z
-     (setf (aref (acceleration (motion *self*)) 2) 0))
-    ((:sdl-key-q) ; + q
-     (setf (aref (acceleration (motion *self*)) 0) 0))
-    ((:sdl-key-a) ; - a
-     (setf (aref (acceleration (motion *self*)) 0) 0))
-    ((:sdl-key-e) ; + e
-     (setf (aref (acceleration (motion *self*)) 1) 0))
-    ((:sdl-key-d) ; - d
-     (setf (aref (acceleration (motion *self*)) 1) 0))
+    ;((:sdl-key-s) ; - z
+    ; (setf (aref (acceleration (motion *self*)) 2) 0))
+    ;((:sdl-key-q) ; + q
+    ; (setf (aref (acceleration (motion *self*)) 0) 0))
+    ;((:sdl-key-a) ; - a
+    ; (setf (aref (acceleration (motion *self*)) 0) 0))
+    ;((:sdl-key-e) ; + e
+    ; (setf (aref (acceleration (motion *self*)) 1) 0))
+    ;((:sdl-key-d) ; - d
+    ; (setf (aref (acceleration (motion *self*)) 1) 0))
     (otherwise (format t "~a~%" key))))
 
 (defun phys-step (time)
