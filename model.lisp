@@ -54,7 +54,10 @@
 		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
 
-;; returns a model of a 3 pyramid
+(defparameter *3pyramid-points*
+  '())
+
+;; returns a model of a 3 pyramid from points and colors
 (defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil))
   (make-instance 'model
 		 :vertices points
