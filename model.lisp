@@ -55,7 +55,33 @@
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
 
 (defparameter *3pyramid-points*
-  '())
+  '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 0.0 0.5)))
+
+(defparameter *colors* (make-hash-table :test 'equal))
+(setf (gethash "red" *colors*) '(255 0 0))
+(setf (gethash "darkred" *colors*) '(139 0 0))
+;(setf (gethash "lightred" *colors*) '(255 0 0))
+
+(setf (gethash "cyan" *colors*) '(0 255 255))
+
+(setf (gethash "blue" *colors*) '(0 0 255))
+(setf (gethash "darkblue" *colors*) '(0 0 139))
+(setf (gethash "lightblue" *colors*) '(173 216 230))
+
+(setf (gethash "pink" *colors*) '(255 20 147))
+
+(setf (gethash "green" *colors*) '(0 128 0))
+(setf (gethash "darkgreen" *colors*) '(0 100 0))
+(setf (gethash "lightgreen" *colors*) '(144 238 144))
+(setf (gethash "forestgreen" *colors*) '(34 140 34))
+
+(setf (gethash "lime" *colors*) '(0 255 0))
+
+(setf (gethash "orange" *colors*) '(255 165 0))
+
+(setf (gethash "black" *colors*) '(0 0 0))
+(setf (gethash "white" *colors*) '(255 255 255))
+
 
 ;; returns a model of a 3 pyramid from points and colors
 (defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil))
