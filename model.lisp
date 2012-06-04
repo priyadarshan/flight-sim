@@ -78,9 +78,12 @@
 (setf (gethash "lime" *colors*) '(0 255 0))
 
 (setf (gethash "orange" *colors*) '(255 165 0))
+(setf (gethash "yellow" *colors*) '(255 255 0))
+(setf (gethash "purple" *colors*) '(128 0 128))
 
 (setf (gethash "black" *colors*) '(0 0 0))
 (setf (gethash "white" *colors*) '(255 255 255))
+(setf (gethash "grey" *colors*) '(128 128 128))
 
 
 ;; returns a model of a 3 pyramid from points and colors
