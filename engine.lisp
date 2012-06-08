@@ -48,35 +48,21 @@
        (let ((start (elt start-model i))
 	     (final (elt final-model i)))
 	 (loop for x from 0 to 2 collect
-	      ;(if (eql (elt start x) (elt final x))
-		;  x
-		  (list (elt start x) (elt final x) duration)))));)
+	      (if (eql (elt start x) (elt final x))
+		  (elt start x)
+		  (list (elt start x) (elt final x) duration))))))
 
-(defparameter *thruster-vertices* 
-  (make-thruster-vertices                                                                                                                          
-   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 0.0))
-   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 1.5))
-   2))
-;  '((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
-;    ; z goes from 0 to 1 in 2 seconds
-;    (0.0 0.0 (0 1.5 2))))
 
 (defun make-thruster-colors (base-color-start base-color-final tip-color-start tip-color-final duration)
   (append (loop for i from 1 to 3 collect 
 	     (loop for x from 0 to 2 collect
 		  (list (elt base-color-start x) (elt base-color-final x) duration)))
 	(list (loop for x from 0 to 2 collect
-		   (list (elt tip-color-start x) (elt tip-color-final x) duration)))))
+		   (if (eql (elt tip-color-start x) (elt tip-color-final x)) 
+		       (elt tip-color-start x)
+		       (list (elt tip-color-start x) (elt tip-color-final x) duration))))))
+		    
 
-(defparameter *thruster-colors*
-  (make-thruster-colors '(32 32 32) '(64 132 164) '(0 0 64) '(255 255 255) 2))
-;  '(((32 64 2) (32 132 2) (32 164 2))  ;; vertex1 : Red (32 -> 62 in 2 sec) Green (32 -> 132 in 2 sec) Blue (32 -> 164 in 2 sec
-;    ((32 64 2) (32 132 2) (32 164 2))
-;    ((32 64 2) (32 132 2) (32 164 2))
-;    ((0 255 2) (0 255 2) (64 255 2))))
-
-;(defparameter *jet-vertices* 
-;  '((0 0 -0.2) (-0.2 0 0.2) (0.2 0 0.2) (0 (0 0.4 1) 0)))
 
 (defmethod draw ((object engine-object) time) 
   (if (< (- time (start-time object)) (activation-time object)) ;; hack since times are in templates!!!
@@ -93,3 +79,21 @@
     
     
 
+(defparameter *rear-thruster-vertices* 
+  (make-thruster-vertices                                                                                                                          
+   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 0.0))
+   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 1.5))
+   2))
+;  '((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
+;    ; z goes from 0 to 1 in 2 seconds
+;    (0.0 0.0 (0 1.5 2))))
+
+(defparameter *rear-thruster-colors*
+  (make-thruster-colors '(32 32 32) '(64 132 164) '(0 0 64) '(255 255 255) 2))
+;  '(((32 64 2) (32 132 2) (32 164 2))  ;; vertex1 : Red (32 -> 62 in 2 sec) Green (32 -> 132 in 2 sec) Blue (32 -> 164 in 2 sec
+;    ((32 64 2) (32 132 2) (32 164 2))
+;    ((32 64 2) (32 132 2) (32 164 2))
+;    ((0 255 2) (0 255 2) (64 255 2))))
+
+;(defparameter *jet-vertices* 
+;  '((0 0 -0.2) (-0.2 0 0.2) (0.2 0 0.2) (0 (0 0.4 1) 0)))

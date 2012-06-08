@@ -182,8 +182,8 @@
 	       (make-instance 'engine-object
 			      :activation-time 2
 			      :model (make-instance 'engine-model 
-						    :template-vertices *thruster-vertices*
-						    :template-colors *thruster-colors*
+						    :template-vertices *rear-thruster-vertices*
+						    :template-colors *rear-thruster-colors*
 						    :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
 						    :face-colors (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))
 			      :force (make-instance 'force :newtons 10000 :direction (vector 0 0 1))
