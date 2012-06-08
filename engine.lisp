@@ -55,7 +55,7 @@
 (defparameter *thruster-vertices* 
   (make-thruster-vertices                                                                                                                          
    '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 0.0))
-   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 1.5 0.0))
+   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 1.5))
    2))
 ;  '((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
 ;    ; z goes from 0 to 1 in 2 seconds
@@ -65,8 +65,8 @@
   (append (loop for i from 1 to 3 collect 
 	     (loop for x from 0 to 2 collect
 		  (list (elt base-color-start x) (elt base-color-final x) duration)))
-	(loop for x from 0 to 2 collect
-	     (list (elt tip-color-start x) (elt tip-color-final x) duration))))
+	(list (loop for x from 0 to 2 collect
+		   (list (elt tip-color-start x) (elt tip-color-final x) duration)))))
 
 (defparameter *thruster-colors*
   (make-thruster-colors '(32 32 32) '(64 132 164) '(0 0 64) '(255 255 255) 2))
