@@ -53,10 +53,11 @@
 						(-0.5 0.0 0.5) (-0.5 0.0 -0.5) (0.0 -1.0 0.0)))
 		 :faces (make-2d-array 8 3 '((0 3 1) (0 2 4) (0 1 2) (0 4 3)
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
-
+; point up along +z
 (defparameter *3pyramid-points*
   '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 0.0 0.5)))
 
+; point up along +z, flat facing +y (into)
 (defparameter *3pyramid-flat-points*
   '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 -0.5 0.5)))
 
@@ -100,8 +101,12 @@
 		 :face-colors (if face-colors 
 				  (make-2d-array 4 3 '((0 0 0) (1 1 1) (2 2 2) (3 3 3)))
 				  (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))))
-	 
-(defparameter *ship-model*
-  (make-model-3pyramid '((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5))
-		       :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
 
+(defun rotate-points (points m)
+  (loop for tri in points collecting (rotate-triangle (make-array (length tri) :initial-contents tri) m)))
+
+(defparameter *ship-model*
+  (make-model-3pyramid *3pyramid-flat-points*
+;(rotate-triangle  (make-2d-array 4 3 *3pyramid-flat-points*) (make-array 3 :initial-contents '(0 90.0 0)))
+		       :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
+;'((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5))
