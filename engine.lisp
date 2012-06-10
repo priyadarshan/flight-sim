@@ -76,8 +76,6 @@
 	 (accel-vec (scale-vector (scale-vector-1 (direction (force src))) (- accel))))
     accel-vec))
     
-    
-    
 
 (defparameter *rear-thruster-vertices* 
   (make-thruster-vertices                                                                                                                          

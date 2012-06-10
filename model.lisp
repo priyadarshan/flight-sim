@@ -57,6 +57,9 @@
 (defparameter *3pyramid-points*
   '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 0.0 0.5)))
 
+(defparameter *3pyramid-flat-points*
+  '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 -0.5 0.5)))
+
 (defparameter *colors* (make-hash-table :test 'equal))
 (setf (gethash "red" *colors*) '(255 0 0))
 (setf (gethash "darkred" *colors*) '(139 0 0))
@@ -89,14 +92,16 @@
 ;; returns a model of a 3 pyramid from points and colors
 (defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil))
   (make-instance 'model
-		 :vertices points
+		 :vertices (if (listp points) (make-2d-array 4 3 points) points)
 		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
-		 :colors (if face-colors face-colors point-colors)
+		 :colors (if face-colors 
+			     (if (listp face-colors) (make-2d-array 4 3 face-colors) face-colors)
+			     (if (listp point-colors) (make-2d-array 4 3 point-colors) point-colors))
 		 :face-colors (if face-colors 
 				  (make-2d-array 4 3 '((0 0 0) (1 1 1) (2 2 2) (3 3 3)))
 				  (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))))
 	 
 (defparameter *ship-model*
-  (make-model-3pyramid (make-2d-array 4 3 '((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5)))
-		       :face-colors (make-2d-array 4 3 '((196 196 196) (196 196 196) (196 196 196) (32 32 32)))))
+  (make-model-3pyramid '((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5))
+		       :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
 
