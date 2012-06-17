@@ -22,7 +22,7 @@
       (float (+ start (* (- end start) (if (eql now 0.0) 0.0 (/ (min now duration) duration)))))))
 
 
-;; returns a real lisp 2d array
+;; returns a real lisp 2d array: args in radians
 (defun make-rotation-matrix (xa ya za) 
   (let ((sxa (sin xa))
 	(cxa (cos xa))
@@ -59,6 +59,9 @@
 (defun scale-vector (v a)
   (make-array (length v) :initial-contents (loop for i across v collecting (* i a))))
 
+(defun scale-points (points a)
+  (make-array (length points) :initial-contents (loop for v across points collecting (scale-vector v a))))
+
 ; returns a vector with all elemts scaled to biggest 1 which is scaled to 1
 ; e.x. (scale-vector (8 4 2)) -> (1 .5 .25)
 (defun scale-vector-1 (v)
@@ -82,3 +85,4 @@
 
 (defun vector+ (v1 v2)
   (make-array (length v1) :initial-contents (loop for i from 0 to (1- (length v1)) collecting (+ (aref v1 i) (aref v2 i)))))
+

@@ -59,7 +59,7 @@
 
 ; point up along +z, flat facing +y (into)
 (defparameter *3pyramid-flat-points*
-  '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 -0.5 0.5)))
+  '((0.0 -0.5 -0.5) (0.0 0.5 0.5) (-0.5 -0.5 0.5) (0.5 -0.5 0.5)))
 
 (defparameter *colors* (make-hash-table :test 'equal))
 (setf (gethash "red" *colors*) '(255 0 0))
@@ -106,7 +106,11 @@
   (loop for tri in points collecting (rotate-triangle (make-array (length tri) :initial-contents tri) m)))
 
 (defparameter *ship-model*
-  (make-model-3pyramid *3pyramid-flat-points*
-;(rotate-triangle  (make-2d-array 4 3 *3pyramid-flat-points*) (make-array 3 :initial-contents '(0 90.0 0)))
+  (make-model-3pyramid ;*3pyramid-flat-points*
+		       (rotate-triangle  (make-2d-array 4 3 *3pyramid-flat-points*) (make-rotation-matrix 0 0 0))
 		       :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
-;'((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5))
+
+;(defparameter *ship-model*
+;  (make-model-3pyramid '((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5))
+;		       :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
+  
