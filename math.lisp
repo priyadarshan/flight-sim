@@ -59,8 +59,16 @@
 (defun scale-vector (v a)
   (make-array (length v) :initial-contents (loop for i across v collecting (* i a))))
 
+; scale points by a
 (defun scale-points (points a)
   (make-array (length points) :initial-contents (loop for v across points collecting (scale-vector v a))))
+
+; scale poitns by v (x y z)
+(defun transform-points (points x y z)
+  (make-array (length points) :initial-contents 
+	      (loop for v across points collecting 
+		   (make-array 3 :initial-contents
+			       (list (* (aref v 0) x) (* (aref v 1) y) (* (aref v 2) z))))))
 
 ; returns a vector with all elemts scaled to biggest 1 which is scaled to 1
 ; e.x. (scale-vector (8 4 2)) -> (1 .5 .25)

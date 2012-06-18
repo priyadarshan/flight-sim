@@ -107,8 +107,10 @@
 
 (defparameter *ship-model*
   (make-model-3pyramid ;*3pyramid-flat-points*
-		       (rotate-triangle  (make-2d-array 4 3 *3pyramid-flat-points*) (make-rotation-matrix 0 0 0))
-		       :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
+   (transform-points
+    (rotate-triangle  (make-2d-array 4 3 *3pyramid-flat-points*) (make-rotation-matrix 0 0 0))
+    4 1 3)
+   :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
 
 ;(defparameter *ship-model*
 ;  (make-model-3pyramid '((0.0 -0.5 -1.5) (0.0 0.5 1.5) (-2.0 -0.5 1.5) (2.0 -0.5 1.5))
