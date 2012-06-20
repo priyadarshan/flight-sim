@@ -55,11 +55,11 @@
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
 ; point up along +z
 (defparameter *3pyramid-points*
-  '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 0.0 0.5)))
+  (make-2d-array 4 3 '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 0.0 0.5))))
 
 ; point up along +z, flat facing +y (into)
 (defparameter *3pyramid-flat-points*
-  '((0.0 -0.5 -0.5) (0.0 0.5 0.5) (-0.5 -0.5 0.5) (0.5 -0.5 0.5)))
+  (make-2d-array 4 3 '((0.0 -0.5 -0.5) (0.0 0.5 0.5) (-0.5 -0.5 0.5) (0.5 -0.5 0.5))))
 
 (defparameter *colors* (make-hash-table :test 'equal))
 (setf (gethash "red" *colors*) '(255 0 0))
@@ -108,8 +108,8 @@
 (defparameter *ship-model*
   (make-model-3pyramid ;*3pyramid-flat-points*
    (transform-points
-    (rotate-triangle  (make-2d-array 4 3 *3pyramid-flat-points*) (make-rotation-matrix 0 0 0))
-    4 1 3)
+    (rotate-triangle  *3pyramid-flat-points* (make-rotation-matrix 0 0 0))
+    '(4 1 3))
    :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
 
 ;(defparameter *ship-model*

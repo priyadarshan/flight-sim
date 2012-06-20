@@ -64,11 +64,11 @@
   (make-array (length points) :initial-contents (loop for v across points collecting (scale-vector v a))))
 
 ; scale poitns by v (x y z)
-(defun transform-points (points x y z)
+(defun transform-points (points xyz)
   (make-array (length points) :initial-contents 
 	      (loop for v across points collecting 
 		   (make-array 3 :initial-contents
-			       (list (* (aref v 0) x) (* (aref v 1) y) (* (aref v 2) z))))))
+			       (list (* (aref v 0) (first xyz)) (* (aref v 1) (second xyz)) (* (aref v 2) (third xyz)))))))
 
 ; returns a vector with all elemts scaled to biggest 1 which is scaled to 1
 ; e.x. (scale-vector (8 4 2)) -> (1 .5 .25)

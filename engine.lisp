@@ -80,7 +80,8 @@
 (defparameter *rear-thruster-vertices* 
   (make-thruster-vertices                                                                                                                          
    '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 0.0))
-   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 1.5))
+   (transform-points (translate-triangle (rotate-triangle *3pyramid-points* (make-rotation-matrix 0 0 0)) (vector 0 0 0.5)) '(4 1 1.5))
+  ; '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 1.5))
    2))
 ;  '((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
 ;    ; z goes from 0 to 1 in 2 seconds
