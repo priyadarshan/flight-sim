@@ -102,14 +102,15 @@
 				  (make-2d-array 4 3 '((0 0 0) (1 1 1) (2 2 2) (3 3 3)))
 				  (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))))
 
-(defun rotate-points (points m)
-  (loop for tri in points collecting (rotate-triangle (make-array (length tri) :initial-contents tri) m)))
+
+
+
 
 (defparameter *ship-model*
   (make-model-3pyramid ;*3pyramid-flat-points*
    (transform-points
-    (rotate-triangle  *3pyramid-flat-points* (make-rotation-matrix 0 0 0))
-    '(4 1 3))
+    (rotate-points  *3pyramid-flat-points* (make-rotation-matrix (vector 0 0 0)))
+    (vector 4 1 3))
    :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
 
 ;(defparameter *ship-model*

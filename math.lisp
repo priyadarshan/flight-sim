@@ -23,13 +23,13 @@
 
 
 ;; returns a real lisp 2d array: args in radians
-(defun make-rotation-matrix (xa ya za) 
-  (let ((sxa (sin xa))
-	(cxa (cos xa))
-	(sya (sin ya))
-	(cya (cos ya))
-	(sza (sin za))
-	(cza (cos za)))
+(defun make-rotation-matrix (xyz) 
+  (let ((sxa (sin (aref xyz 0))) ;x
+	(cxa (cos (aref xyz 0))) ;x
+	(sya (sin (aref xyz 1))) ;y 
+	(cya (cos (aref xyz 1))) ;y
+	(sza (sin (aref xyz 2))) ;z
+	(cza (cos (aref xyz 2)))) ;z
     (make-array '(3 3) :initial-contents (list (list (* cya cza) (+ (- (* cxa sza)) (* sxa sya cza)) (+ (* sxa sza) (* cxa sya cza)))
 					   (list (* cya sza) (+ (* cxa cza) (* sxa sya sza)) (+ (- (* sxa cza)) (* cxa sya sza)))
 					   (list (- sya) (* sxa cya) (* cxa cya))))))
@@ -48,13 +48,21 @@
     result))
   
 
-(defun translate-triangle (tri position)
+(defun translate-points (tri position)
   (make-array (length tri) :initial-contents
 	      (loop for v across tri collecting (translate-point position v))))
 
-(defun rotate-triangle (tri m)
-  (make-array (length tri) :initial-contents
-	      (loop for v across tri collecting (rotate* m v))))
+(defun rotate-triangle (points m)
+;  (if (not (vectorp (aref m 0)))
+;      (rotate-triangle points (make-rotation-matrix m)))
+  (make-array (length points) :initial-contents
+	      (loop for v across points collecting (rotate* m v))))
+
+(defun rotate-points (points m)
+;  (if (not (vectorp (aref m 0)))
+;      (rotate-points points (make-rotation-matrix m)))
+  (make-array (length points) :initial-contents (loop for tri across points collecting (rotate* m tri))))
+
 
 (defun scale-vector (v a)
   (make-array (length v) :initial-contents (loop for i across v collecting (* i a))))
@@ -68,7 +76,7 @@
   (make-array (length points) :initial-contents 
 	      (loop for v across points collecting 
 		   (make-array 3 :initial-contents
-			       (list (* (aref v 0) (first xyz)) (* (aref v 1) (second xyz)) (* (aref v 2) (third xyz)))))))
+			       (list (* (aref v 0) (aref xyz 0)) (* (aref v 1) (aref xyz 1)) (* (aref v 2) (aref xyz 2)))))))
 
 ; returns a vector with all elemts scaled to biggest 1 which is scaled to 1
 ; e.x. (scale-vector (8 4 2)) -> (1 .5 .25)

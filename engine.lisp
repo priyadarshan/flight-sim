@@ -79,8 +79,9 @@
 
 (defparameter *rear-thruster-vertices* 
   (make-thruster-vertices                                                                                                                          
-   '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 0.0))
-   (transform-points (translate-triangle (rotate-triangle *3pyramid-points* (make-rotation-matrix 0 0 0)) (vector 0 0 0.5)) '(4 1 1.5))
+   (transform-points (translate-points *3pyramid-points* (vector 0 0 0.5)) (vector 4 1 1.01))
+   ;'( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 0.0))
+   (transform-points (translate-points (rotate-points *3pyramid-points* (make-rotation-matrix (vector 0 0 0))) (vector 0 0 0.5)) (vector 14 1 1.5))
   ; '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 1.5))
    2))
 ;  '((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
