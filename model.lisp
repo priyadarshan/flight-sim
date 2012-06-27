@@ -109,7 +109,8 @@
 (defparameter *ship-model*
   (make-model-3pyramid ;*3pyramid-flat-points*
    (transform-points
-    (rotate-points  *3pyramid-flat-points* (make-rotation-matrix (vector 0 0 0)))
+    ;(rotate-points  *3pyramid-flat-points* (make-rotation-matrix (vector 0 0 0)))
+    (rotate-points  *3pyramid-flat-points* (vector 0 0 0))
     (vector 4 1 3))
    :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
 

@@ -53,15 +53,15 @@
 	      (loop for v across tri collecting (translate-point position v))))
 
 (defun rotate-triangle (points m)
-;  (if (not (vectorp (aref m 0)))
-;      (rotate-triangle points (make-rotation-matrix m)))
-  (make-array (length points) :initial-contents
-	      (loop for v across points collecting (rotate* m v))))
+  (if (not (eql (second (type-of m)) t))
+      (rotate-triangle points (make-rotation-matrix m))
+      (make-array (length points) :initial-contents
+		  (loop for v across points collecting (rotate* m v)))))
 
 (defun rotate-points (points m)
-;  (if (not (vectorp (aref m 0)))
-;      (rotate-points points (make-rotation-matrix m)))
-  (make-array (length points) :initial-contents (loop for tri across points collecting (rotate* m tri))))
+  (if (not (eql (second (type-of m)) t))
+      (rotate-points points (make-rotation-matrix m))
+      (make-array (length points) :initial-contents (loop for tri across points collecting (rotate* m tri)))))
 
 
 (defun scale-vector (v a)
