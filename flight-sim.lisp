@@ -65,10 +65,6 @@
   (case key 
     ((:sdl-key-w) ; + z
      (activate-attachment *self* :thruster (wall-time)))
-   ;  (progn
-       ;(setf (aref (acceleration (motion *self*)) 2) (- *acceleration*))
-       ;(engine-start (engine *self*) (wall-time))))
- ;      (activate-engine *self* :thrust))) 
      
    ; ((:sdl-key-s) ; - z
    ;  (setf (aref (acceleration (motion *self*)) 2) *acceleration*))
@@ -78,19 +74,15 @@
    ;  (setf (aref (acceleration (motion *self*)) 0) (- *acceleration*)))
    ; ((:sdl-key-e) ; + y
    ;  (setf (aref (acceleration (motion *self*)) 1) *acceleration*))
-   ; ((:sdl-key-d) ; - y
-   ;  (setf (aref (acceleration (motion *self*)) 1) (- *acceleration*)))
+    ((:sdl-key-d) ; - y
+     (activate-attachment *self* :left-jet (wall-time)))
     (otherwise (format t "~a~%" key))))
 
 (defun thruster-off (key)
   (case key 
     ((:sdl-key-w) ; + z
      (deactivate-attachment *self* :thruster))
-    ; (progn
-    ;   (setf (aref (acceleration (motion *self*)) 2) 0)
-    ;   (engine-stop (engine *self*))))
-     
-    ;((:sdl-key-s) ; - z
+      ;((:sdl-key-s) ; - z
     ; (setf (aref (acceleration (motion *self*)) 2) 0))
     ;((:sdl-key-q) ; + q
     ; (setf (aref (acceleration (motion *self*)) 0) 0))
@@ -98,8 +90,8 @@
     ; (setf (aref (acceleration (motion *self*)) 0) 0))
     ;((:sdl-key-e) ; + e
     ; (setf (aref (acceleration (motion *self*)) 1) 0))
-    ;((:sdl-key-d) ; - d
-    ; (setf (aref (acceleration (motion *self*)) 1) 0))
+    ((:sdl-key-d) ; - d
+     (deactivate-attachment *self* :left-jet))
     (otherwise (format t "~a~%" key))))
 
 (defun phys-step (time)
@@ -190,6 +182,17 @@
 			      
 			      :body (make-instance 'body
 						   :coords (vector 0 0 1.5)))
+	       :left-jet
+	       (make-instance 'engine-object
+			      :activation-time 2
+			      :model (make-instance 'engine-model
+						    :template-vertices *left-jet-vertices*
+						    :template-colors *left-jet-colors*
+						    :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
+						    :face-colors (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3))))
+			      :force (make-instance 'force :newtons 2000 :direction (vector 1 0 0))
+			      :body (make-instance 'body
+						   :coords (vector -.5 .2 0)))
 	       ; yaw (starboard (right) positive)
 ;	       :pos-yaw 
 ;	       (make-instance 'engine-object

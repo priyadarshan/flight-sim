@@ -95,5 +95,13 @@
 ;    ((32 64 2) (32 132 2) (32 164 2))
 ;    ((0 255 2) (0 255 2) (64 255 2))))
 
-;(defparameter *jet-vertices* 
-;  '((0 0 -0.2) (-0.2 0 0.2) (0.2 0 0.2) (0 (0 0.4 1) 0)))
+(defparameter *left-jet-vertices*
+  (make-thruster-vertices
+   (rotate-points (transform-points *3pyramid-points* (vector 0.25 0.25 0.2)) (vector (- (+ (/ pi 2) .5)) 0 .5))
+   (rotate-points (transform-points *3pyramid-points* (vector 0.25 0.25 0.4)) (vector (- (+ (/ pi 2) .5)) 0 .5))
+   2))
+
+(defparameter *left-jet-colors*
+  (make-thruster-colors '(40 40 40) '(255 255 0) '(80 80 80) '(255 255 255) 2))
+;  (make-thruster-colors '(196 196 196) '(255 255 196) '(196 196 196) '(255 255 255) 2))
+
