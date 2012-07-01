@@ -55,11 +55,14 @@
 					     (3 5 1) (2 5 4) (1 5 2) (4 5 3)))))
 ; point up along +z
 (defparameter *3pyramid-points*
-  (make-2d-array 4 3 '((0.0 0.5 -0.5) (-0.5 -0.5 -0.5) (0.5 -0.5 -0.5) (0.0 0.0 0.5))))
+  (make-2d-array 4 3 '((0.0 0.5 0) (-0.5 -0.5 0) (0.5 -0.5 0) (0.0 0.0 1))))
 
 ; point up along +z, flat facing +y (into)
 (defparameter *3pyramid-flat-points*
-  (make-2d-array 4 3 '((0.0 -0.5 -0.5) (0.0 0.5 0.5) (-0.5 -0.5 0.5) (0.5 -0.5 0.5))))
+  (make-2d-array 4 3 '((0.0 0.5 0) (-0.5 -0.5 0) (0.5 -0.5 0) (0.0 -0.5 1))))
+;                        back top                                    tip
+;  (make-2d-array 4 3 '((0.0 -0.5 -1) (0.0 0.5 0) (-0.5 -0.5 0) (0.5 -0.5 0))))
+ ;                           tip                                     backtop
 
 (defparameter *colors* (make-hash-table :test 'equal))
 (setf (gethash "red" *colors*) '(255 0 0))
@@ -94,7 +97,8 @@
 (defun make-model-3pyramid (points &key (face-colors nil) (point-colors nil))
   (make-instance 'model
 		 :vertices (if (listp points) (make-2d-array 4 3 points) points)
-		 :faces (make-2d-array 4 3 '((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
+		 :faces (make-2d-array 4 3 '((0 1 3) (1 2 3) (0 3 2) (0 2 1)))
+		 ;'((0 1 3) (0 2 1) (0 3 2) (1 2 3)))
 		 :colors (if face-colors 
 			     (if (listp face-colors) (make-2d-array 4 3 face-colors) face-colors)
 			     (if (listp point-colors) (make-2d-array 4 3 point-colors) point-colors))
@@ -110,7 +114,7 @@
   (make-model-3pyramid ;*3pyramid-flat-points*
    (transform-points
     ;(rotate-points  *3pyramid-flat-points* (make-rotation-matrix (vector 0 0 0)))
-    (rotate-points  *3pyramid-flat-points* (vector 0 0 0))
+    (translate-points (rotate-points  *3pyramid-flat-points* (vector 0 pi 0)) (vector 0 0 0.5))
     (vector 4 1 3))
    :face-colors '((196 196 196) (196 196 196) (196 196 196) (32 32 32))))
 

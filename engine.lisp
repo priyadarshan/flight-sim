@@ -66,7 +66,10 @@
 
 (defmethod draw ((object engine-object) time) 
   (if (< (- time (start-time object)) (activation-time object)) ;; hack since times are in templates!!!
-      (regen-model (model object) (- time (start-time object))))
+      ;(progn ;debug model transform 
+	(regen-model (model object) (- time (start-time object))) 
+	;(format t "~a~%" (vertices (model object))) )  
+      ) 
   (call-next-method))
 	    
       
@@ -78,10 +81,9 @@
     
 
 (defparameter *rear-thruster-vertices* 
-  (make-thruster-vertices                                                                                                                          
-   (transform-points (translate-points *3pyramid-points* (vector 0 0 0.5)) (vector 4 1 1.01))
-   ;'( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 0.0))
-   (transform-points (translate-points (rotate-points *3pyramid-points* (vector 0 0 0)) (vector 0 0 0.5)) (vector 4 1 1.5))
+  (make-thruster-vertices                                                                                                      (transform-points *3pyramid-points* (vector 4 1 0.1))
+   ;'( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (o0.0 0.0 0.0))
+   (transform-points *3pyramid-points* (vector 4 1 1.5))
   ; '( (0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) (0.0 0.0 1.5))
    2))
 ;  '((0.0 0.5 0.0) (-2.0 -0.5 0.0) (2.0 -0.5 0.0) 
